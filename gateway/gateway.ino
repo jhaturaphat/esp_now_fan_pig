@@ -97,7 +97,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
-      Serial.printf("ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+      Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
     }
   }
 }
