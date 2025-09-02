@@ -3,9 +3,6 @@
  * ใช้ ESP-NOW Protocol สำหรับการสื่อสาร
  */
 
-#include <esp_now.h>
-#include <WiFi.h>
-
 // กำหนด PIN
 #define BUZZER_PIN 18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN 19        // Siren สำหรับแจ้งเตือนหลัก
@@ -14,6 +11,21 @@
 // จำนวน Sensor
 #define MAX_SENSORS 7
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout
+
+// #define BLYNK_PRINT Serial
+// #define BLYNK_TEMPLATE_ID "TMPL6ngbPI81S"
+// #define BLYNK_TEMPLATE_NAME "test01"
+// #define BLYNK_AUTH_TOKEN "eKOKJX72HVSjWGsNVasTbh0aSUIazDU-"
+
+// #include <BlynkSimpleEsp32.h>
+#include <esp_now.h>
+#include <WiFi.h>
+
+unsigned long lastSensorCheck = 0;
+unsigned long lastLedUpdate  = 0;
+
+char ssid[] = "kid_2.4GHz";
+char pass[] = "xx3xx3xx";
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
 typedef struct sensor_message {
@@ -39,6 +51,9 @@ unsigned long buzzer_start_time = 0;
 
 void setup() {
   Serial.begin(115200);
+
+  // เริ่มต้นการเชื่อมต่อ Blynk โดยตรง
+  // Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   
   // กำหนด PIN Mode
   pinMode(BUZZER_PIN, OUTPUT);
@@ -65,14 +80,26 @@ void setup() {
   Serial.println("Waiting for sensors...");
   
   // ทดสอบระบบเสียง
-  testSounds();
+   testSounds();
 }
 
 void loop() {
-  checkSensorCommunication();
-  handleAlarms();
-  updateStatusLED();
-  delay(1000);
+  unsigned long currentMillis = millis();
+
+  // ตรวจสอบ Sensor ทุก 1 วินาที
+  if (currentMillis - lastSensorCheck >= 1000) {
+    lastSensorCheck = currentMillis;
+    checkSensorCommunication();
+  }
+
+  // อัพเดท LED ทุก 200 ms
+  if (currentMillis - lastLedUpdate >= 200) {
+    lastLedUpdate = currentMillis;
+    updateStatusLED();
+  }
+
+  // Blynk ต้องรันตลอด
+  // Blynk.run();
 }
 
 // Callback สำหรับรับข้อมูล (สำหรับ ESP32 Arduino Core 3.x)
@@ -93,6 +120,9 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
                   msg.sensor_id, 
                   msg.switch_status ? "CLOSED" : "OPEN",
                   recv_info->rx_ctrl->rssi);
+    
+    // ✅ ส่งสถานะขึ้น Blynk
+    // Blynk.virtualWrite(index, msg.switch_status ? 1 : 0);  // V0..V6
     
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
@@ -123,6 +153,8 @@ void checkSensorCommunication() {
         if (sensors[i].is_online) {
           Serial.printf("⛔WARNING: Lost communication with Sensor %d\n", i + 1);
           sensors[i].is_online = false;
+          
+          // Blynk.virtualWrite(i, 0);  // แจ้ง OFFLINE บน Blynk
         }
         offline_count++;
       }
