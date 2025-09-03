@@ -24,8 +24,8 @@
 unsigned long lastSensorCheck = 0;
 unsigned long lastLedUpdate  = 0;
 
-char ssid[] = "kid_2.4GHz";
-char pass[] = "xx3xx3xx";
+// char ssid[] = "kid_2.4GHz";
+// char pass[] = "xx3xx3xx";
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
 typedef struct sensor_message {
@@ -90,6 +90,7 @@ void loop() {
   if (currentMillis - lastSensorCheck >= 1000) {
     lastSensorCheck = currentMillis;
     checkSensorCommunication();
+    handleAlarms();
   }
 
   // อัพเดท LED ทุก 200 ms
