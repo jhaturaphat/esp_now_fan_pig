@@ -3,6 +3,9 @@
  * ใช้ ESP-NOW Protocol สำหรับการสื่อสาร
  */
 
+#include <esp_now.h>
+#include <WiFi.h>
+
 // กำหนด PIN
 #define BUZZER_PIN 18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN 19        // Siren สำหรับแจ้งเตือนหลัก
@@ -12,20 +15,7 @@
 #define MAX_SENSORS 7
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout
 
-// #define BLYNK_PRINT Serial
-// #define BLYNK_TEMPLATE_ID "TMPL6ngbPI81S"
-// #define BLYNK_TEMPLATE_NAME "test01"
-// #define BLYNK_AUTH_TOKEN "eKOKJX72HVSjWGsNVasTbh0aSUIazDU-"
-
-// #include <BlynkSimpleEsp32.h>
-#include <esp_now.h>
-#include <WiFi.h>
-
 unsigned long lastSensorCheck = 0;
-unsigned long lastLedUpdate  = 0;
-
-// char ssid[] = "kid_2.4GHz";
-// char pass[] = "xx3xx3xx";
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
 typedef struct sensor_message {
@@ -49,13 +39,8 @@ unsigned long last_check_time = 0;
 unsigned long siren_start_time = 0;
 unsigned long buzzer_start_time = 0;
 
-
-
 void setup() {
   Serial.begin(115200);
-
-  // เริ่มต้นการเชื่อมต่อ Blynk โดยตรง
-  // Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   
   // กำหนด PIN Mode
   pinMode(BUZZER_PIN, OUTPUT);
@@ -82,27 +67,18 @@ void setup() {
   Serial.println("Waiting for sensors...");
   
   // ทดสอบระบบเสียง
-   testSounds();
+  testSounds();
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-  
-  if (currentMillis - lastSensorCheck >= 1000) { // ตรวจสอบ Sensor ทุก 1 วินาที
-    lastSensorCheck = currentMillis;  
-    checkSensorCommunication();  
-    handleAlarms();    
+  unsigned currentMillis = millis();
+  if(currentMillis - lastSensorCheck >= 1000){
+    lastSensorCheck = currentMillis;   
+    checkSensorCommunication();
+    handleAlarms();
     updateStatusLED();
-  }
-
-  // อัพเดท LED ทุก 200 ms
-  // if (currentMillis - lastLedUpdate >= 200) {
-  //   lastLedUpdate = currentMillis;
-  //   updateStatusLED();
-  // }
-
-  // Blynk ต้องรันตลอด
-  // Blynk.run();
+  }  
+  // delay(1000);
 }
 
 // Callback สำหรับรับข้อมูล (สำหรับ ESP32 Arduino Core 3.x)
@@ -118,7 +94,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     sensors[index].switch_state = msg.switch_status;
     sensors[index].last_seen = millis();
     memcpy(sensors[index].mac, recv_info->src_addr, 6);
-    // สถานะ switch (true=closed, false=open)
+    
     Serial.printf("🚀Sensor %d: Switch=%s, RSSI=%d\n", 
                   msg.sensor_id, 
                   msg.switch_status ? "🟢CLOSED" : "🚨OPEN",
@@ -145,7 +121,7 @@ void initializeSensors() {
 }
 
 void checkSensorCommunication() {
-  if (millis() - last_check_time < 10000) return;  // ตรวจสอบทุก 10 วินาที
+  if (millis() - last_check_time < 5000) return;  // ตรวจสอบทุก 5 วินาที
   
   last_check_time = millis();
   int offline_count = 0;
@@ -154,10 +130,8 @@ void checkSensorCommunication() {
     if (sensors[i].last_seen > 0) {  // sensor เคยส่งข้อมูลมาแล้ว
       if (millis() - sensors[i].last_seen > COMMUNICATION_TIMEOUT) {
         if (sensors[i].is_online) {
-          Serial.printf("⛔WARNING: Lost communication with Sensor %d\n", i + 1);
+          Serial.printf("WARNING: Lost communication with Sensor %d\n", i + 1);
           sensors[i].is_online = false;
-          
-          // Blynk.virtualWrite(i, 0);  // แจ้ง OFFLINE บน Blynk
         }
         offline_count++;
       }
@@ -172,7 +146,8 @@ void checkSensorCommunication() {
   } else if (offline_count > 0 && offline_count < MAX_SENSORS) {
     // ขาดการสื่อสารบางตัว -> เปิด buzzer
     triggerBuzzer();
-    Serial.printf("📵WARNING: %d sensors offline\n", offline_count);
+    triggerSiren();
+    Serial.printf("WARNING: มี %d sensors offline\n", offline_count);
   } else {
     // ทุก sensor เชื่อมต่อปกติ -> ปิดเสียงเตือน
     if (buzzer_active && !siren_active) {
@@ -186,7 +161,7 @@ void triggerSiren() {
     siren_active = true;
     siren_start_time = millis();
     digitalWrite(SIREN_PIN, HIGH);
-    Serial.println("SIREN ACTIVATED!");
+    Serial.println("SIREN ACTIVATED! " +(String)siren_start_time);
     
     // ปิด buzzer เมื่อเปิดไซเรน
     if (buzzer_active) {
@@ -220,13 +195,8 @@ void stopBuzzer() {
 }
 
 void handleAlarms() {
-  // จัดการไซเรน (เปิดไว้ 10 วินาที)
-//  for (int i = 0; i < MAX_SENSORS; i++) {
-//     Serial.print("Sensor ID : "+ (String)i +" ");
-//     Serial.print(sensors[i].is_online);
-//     Serial.println(sensors[i].switch_state);
-//   }
-  if (siren_active && millis() - siren_start_time > 10000) {
+  // จัดการไซเรน (เปิดไว้ 10 วินาที)  
+  if (siren_active && (millis() - siren_start_time > 10000)) {
     stopSiren();
   }
   
@@ -272,7 +242,7 @@ void testSounds() {
 void printSystemStatus() {
   Serial.println("\n=== SYSTEM STATUS ===");
   for (int i = 0; i < MAX_SENSORS; i++) {
-    Serial.printf("🟢🟢Sensor %d: %s, Switch: %s, Last seen: %lu ms ago\n",
+    Serial.printf("Sensor %d: %s, Switch: %s, Last seen: %lu ms ago\n",
                   i + 1,
                   sensors[i].is_online ? "ONLINE" : "OFFLINE",
                   sensors[i].switch_state ? "CLOSED" : "OPEN",

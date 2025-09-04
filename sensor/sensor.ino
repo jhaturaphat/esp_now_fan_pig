@@ -39,7 +39,7 @@ const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วิน
 const unsigned long HEARTBEAT_INTERVAL = 10000; // ส่ง heartbeat ทุก 10 วินาที
 
 void setup() {
-  Serial.begin(115200);
+  // Serial.begin(115200);
   
   // กำหนด PIN Mode
   pinMode(REED_SWITCH_PIN, INPUT_PULLUP);  // ใช้ Pull-up ภายใน
@@ -52,12 +52,12 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   
-  Serial.printf("Sensor ID: %d\n", SENSOR_ID);
-  Serial.println("MAC Address: " + WiFi.macAddress());
+  // Serial.printf("Sensor ID: %d\n", SENSOR_ID);
+  // Serial.println("MAC Address: " + WiFi.macAddress());
   
   // เริ่มต้น ESP-NOW
   if (esp_now_init() != 0) {
-    Serial.println("Error initializing ESP-NOW");
+    // Serial.println("Error initializing ESP-NOW");
     errorBlink();
     ESP.restart();
   }
@@ -70,11 +70,11 @@ void setup() {
   
   // เพิ่ม Gateway เป็น Peer
   if (esp_now_add_peer(gateway_mac, ESP_NOW_ROLE_SLAVE, 1, NULL, 0) != 0) {
-    Serial.println("Failed to add Gateway as peer");
+    // Serial.println("Failed to add Gateway as peer");
     errorBlink();
   }
   
-  Serial.println("ESP-01 Sensor Ready");
+  // Serial.println("ESP-01 Sensor Ready");
   
   // อ่านสถานะเริ่มต้น
   last_switch_state = digitalRead(REED_SWITCH_PIN);
@@ -93,8 +93,8 @@ void loop() {
   
   // ตรวจสอบการเปลี่ยนแปลงสถานะ
   if (current_switch_state != last_switch_state) {
-    Serial.printf("Switch state changed: %s\n", 
-                  current_switch_state ? "CLOSED" : "OPEN");
+    // Serial.printf("Switch state changed: %s\n", 
+    //               current_switch_state ? "CLOSED" : "OPEN");
     
     // ส่งข้อมูลทันทีเมื่อมีการเปลี่ยนแปลง
     sendSensorData(false);
@@ -125,21 +125,21 @@ void sendSensorData(bool is_heartbeat) {
   // ส่งข้อมูล
   esp_now_send(gateway_mac, (uint8_t *) &msg, sizeof(msg));
   
-  if (is_heartbeat) {
-    Serial.printf("Heartbeat sent - Switch: %s\n", 
-                  msg.switch_status ? "CLOSED" : "OPEN");
-  } else {
-    Serial.printf("Alert sent - Switch: %s\n", 
-                  msg.switch_status ? "CLOSED" : "OPEN");
-  }
+  // if (is_heartbeat) {
+  //   Serial.printf("Heartbeat sent - Switch: %s\n", 
+  //                msg.switch_status ? "CLOSED" : "OPEN");
+  // } else {
+  //   Serial.printf("Alert sent - Switch: %s\n", 
+  //                 msg.switch_status ? "CLOSED" : "OPEN");
+  // }
 }
 
 // Callback เมื่อส่งข้อมูลเสร็จ
 void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   if (sendStatus == 0) {
-    Serial.println("Data sent successfully");
+    //Serial.println("Data sent successfully");
   } else {
-    Serial.println("Error sending data");
+    //Serial.println("Error sending data");
     errorBlink();
   }
 }
