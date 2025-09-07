@@ -123,12 +123,13 @@ void loop() {
   // }
   
   // ตรวจสอบการเชื่อมต่อ WiFi
-  if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >= WIFI_TIMEOUT)) {
+  if ((WiFi.status() != WL_CONNECTED)) {
     Serial.println("WiFi disconnected, attempting to reconnect...");
     WiFi.disconnect();
     WiFi.reconnect();
     previousMillis = currentMillis;
     digitalWrite(BUZZER_PIN, HIGH);    
+    delay(1000);
   }else{
     digitalWrite(BUZZER_PIN, LOW);     
   }
