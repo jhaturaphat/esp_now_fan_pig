@@ -15,7 +15,7 @@
 #include <espnow.h>
 
 // กำหนดค่าสำคัญ - *** เปลี่ยนในแต่ละ sensor ***
-#define SENSOR_ID 1  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
+#define SENSOR_ID 4  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
 
 // MAC Address ของ Gateway ESP32 - *** ต้องใส่ MAC จริงของ Gateway *** 24:d7:eb:0e:f1:fc
 uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง

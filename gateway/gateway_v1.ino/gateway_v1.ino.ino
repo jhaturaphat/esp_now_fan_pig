@@ -7,7 +7,7 @@
 #include <WiFi.h>
 
 // กำหนด PIN
-#define BUZZER_PIN 18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
+#define BUZZER_PIN  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN 19        // Siren สำหรับแจ้งเตือนหลัก
 #define LED_STATUS_PIN 2    // LED แสดงสถานะ
 
@@ -72,7 +72,7 @@ void setup() {
 
 void loop() {
   unsigned currentMillis = millis();
-  if(currentMillis - lastSensorCheck >= 1000){
+  if(currentMillis - lastSensorCheck >= 100){
     lastSensorCheck = currentMillis;   
     checkSensorCommunication();
     handleAlarms();
@@ -126,12 +126,14 @@ void checkSensorCommunication() {
   last_check_time = millis();
   int offline_count = 0;
   
+  
   for (int i = 0; i < MAX_SENSORS; i++) {
     if (sensors[i].last_seen > 0) {  // sensor เคยส่งข้อมูลมาแล้ว
       if (millis() - sensors[i].last_seen > COMMUNICATION_TIMEOUT) {
         if (sensors[i].is_online) {
           Serial.printf("WARNING: Lost communication with Sensor %d\n", i + 1);
           sensors[i].is_online = false;
+          
         }
         offline_count++;
       }
@@ -143,11 +145,10 @@ void checkSensorCommunication() {
     // ขาดการสื่อสารทั้งหมด -> เปิดไซเรน
     triggerSiren();
     Serial.println("CRITICAL: Lost communication with ALL sensors!");
-  } else if (offline_count > 0 && offline_count < MAX_SENSORS) {
+  } else if (offline_count > 0 && offline_count < MAX_SENSORS) {  
     // ขาดการสื่อสารบางตัว -> เปิด buzzer
     triggerBuzzer();
-    triggerSiren();
-    Serial.printf("WARNING: มี %d sensors offline\n", offline_count);
+    Serial.printf("WARNING: มี %d sensors offline MAX_SENSORS=%d\n", offline_count, MAX_SENSORS);
   } else {
     // ทุก sensor เชื่อมต่อปกติ -> ปิดเสียงเตือน
     if (buzzer_active && !siren_active) {

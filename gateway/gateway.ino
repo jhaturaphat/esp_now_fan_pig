@@ -88,7 +88,7 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
   
-  if (currentMillis - lastSensorCheck >= 1000) { // ตรวจสอบ Sensor ทุก 1 วินาที
+  if (currentMillis - lastSensorCheck >= 2000) { // ตรวจสอบ Sensor ทุก 1 วินาที
     lastSensorCheck = currentMillis;  
     checkSensorCommunication();  
     handleAlarms();    
