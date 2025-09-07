@@ -14,7 +14,7 @@
 
 // จำนวน Sensor
 #define MAX_SENSORS 7
-#define COMMUNICATION_TIMEOUT 60000  // 60 วินาที timeout
+#define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
 #define SIREN_TIMEOUT 60000 // 60 วินาที timeout
 
 unsigned long lastSensorCheck = 0;
@@ -108,7 +108,7 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
   
-  if(currentMillis - lastSensorCheck >= 60000){ //ทำงานทุกๆ 30 วินาที
+  if(currentMillis - lastSensorCheck >= SIREN_TIMEOUT){ //ทำงานทุกๆ 30 วินาที
     lastSensorCheck = currentMillis;   
     checkSensorCommunication();
     handleAlarms();
@@ -122,7 +122,7 @@ void loop() {
   }
 
   // ตรวจสอบ Comunication Loss
-  if(currentMillis - lastComunication >= COMMUNICATION_TIMEOUT){
+  if(currentMillis - lastComunication >= SIREN_TIMEOUT){
     lastComunication = currentMillis;
     handleComunicationAlarms();
   }
@@ -145,7 +145,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
-      Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+      // Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
     }
   }
 }
@@ -224,17 +224,15 @@ void checkSensorCommunication() {
   }
 }
 
-
-void triggerSiren() {
-  // // ใส่ code notify ที่นี้ 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+//🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+void triggerSiren() {  
   if (!siren_active) {
     siren_active = true;
     siren_start_time = millis();
     digitalWrite(SIREN_PIN, HIGH);
-    Serial.println("🚨 SIREN ACTIVATED! 🚨");
+    // Serial.println("🚨 SIREN ACTIVATED! 🚨");
     //ส่งข้อมูลไปยัง ESP ตัวที่ 2
-    Serial2.println(getSystemStatus());
-    Serial2.print("END");    
+    Serial2.println(getSystemStatus());   
     // ปิด buzzer เมื่อเปิดไซเรน
     if (buzzer_active) {
       stopBuzzer();
@@ -276,11 +274,10 @@ void handleAlarms() {
 }
 
 // จัดการ buzzer BUZZER_PIN = 18
-void handleComunicationAlarms(){  
-  // // ใส่ code notify ที่นี้ 📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢📢  
+//📢📢📢📢📢📢📢📢📢📢📢
+void handleComunicationAlarms(){    
   if (buzzer_active && !siren_active) {    
-    Serial2.println(getSystemStatus()); 
-    Serial2.print("END");    
+    Serial2.println(getSystemStatus());     
     digitalWrite(BUZZER_PIN, HIGH);    
   }else{
     digitalWrite(BUZZER_PIN, LOW);
@@ -317,9 +314,10 @@ void testSounds() {
 }
 
 String getSystemStatus(){
-  system_status = "";
+  system_status = "START\n";  // เริ่มด้วย marker;
   for (int i = 0; i < MAX_SENSORS; i++) {
-    String status_icon = sensors[i].is_online ? "🟢" : "🔴";
+    // String status_icon = sensors[i].is_online ? "🟢" : "🔴";
+    String status_icon = sensors[i].is_online ? "🟢" : sensors[i].last_seen > 0 ? "🔴" : "⚫" ;
     String switch_icon = sensors[i].switch_state ? "🔒" : "🚨";
     String connection = sensors[i].is_online ? "ONLINE " : "OFFLINE";
     String switch_status = sensors[i].switch_state ? "CLOSED" : "OPEN  ";
@@ -332,7 +330,7 @@ String getSystemStatus(){
                 String(time_since_last) + " sec ago\n";
   }
   
-  return system_status;
+  return system_status += "END\n";  // จบด้วย marker;
 }
 
 void printSystemStatus() {
@@ -346,7 +344,8 @@ void printSystemStatus() {
   int open_count = 0;
   
   for (int i = 0; i < MAX_SENSORS; i++) {
-    String status_icon = sensors[i].is_online ? "🟢" : "🔴";
+    // String status_icon = sensors[i].is_online ? "🟢" : "🔴";
+    String status_icon = sensors[i].is_online ? "🟢" : sensors[i].last_seen > 0  ? "🔴" : "⚫" ;
     String switch_icon = sensors[i].switch_state ? "🔒" : "🚨";
     String connection = sensors[i].is_online ? "ONLINE " : "OFFLINE";
     String switch_status = sensors[i].switch_state ? "CLOSED" : "OPEN  ";

@@ -4,6 +4,11 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
+#define BUZZER_PIN 18  //Buzzer สำหรับขาดการสือสาร
+
+unsigned long previousMillis = 0;
+#define WIFI_TIMEOUT 30000 
+
 const char* ssid = "TEST";
 const char* password = ""; // ใส่รหัสผ่าน WiFi ถ้ามี
 const char* webhookUrl = "https://discord.com/api/webhooks/1344992087879188550/vGrbJbJQUkaf_ZmxpzSvm9_1gcwHrEylA-VOQCTrlKsu2gq8mq9tTycQWKT7I8jlQb4n";
@@ -13,6 +18,7 @@ const unsigned long interval = 60000 * 2; // ส่งทุก 60 วินา�
 
 String buffer = "";  // Buffer สำหรับสะสม message
 bool lastWasNewline = false;  // ตรวจสอบ \n ก่อนหน้า
+bool receiving = false;  // Track ว่ากำลังรับ message หรือไม่
 
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;
@@ -22,6 +28,9 @@ void setup() {
   Serial.begin(115200);
   Serial2.begin(9600, SERIAL_8N1, 16, 17); 
   
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+
   // เชื่อมต่อ Wi-Fi
   WiFi.begin(ssid, password);
   Serial.println("Connecting to WiFi...");
@@ -38,9 +47,10 @@ void setup() {
     Serial.println("Connected to WiFi!");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
-    
+    String ip = String(WiFi.localIP());
     // ทดสอบส่งข้อความเมื่อเชื่อมต่อสำเร็จ
-    sendMessageToDiscord("ESP32 เชื่อมต่อสำเร็จแล้ว! 🎉");
+    // sendMessageToDiscord("Gateway เชื่อมต่อสำเร็จแล้ว! 🎉");
+    sendMessageToDiscord("📶 เชื่อมต่อสำเร็จแล้ว! 🎉 \n IP:"+ip);  
   } else {
     Serial.println();
     Serial.println("Failed to connect to WiFi");
@@ -73,9 +83,17 @@ void loop() {
     //   Serial.println(c);
     // }
 
+    // ตรวจสอบ start marker
+    if (buffer.endsWith("START\n")) {
+      buffer = "";  // ล้าง buffer เริ่มใหม่
+      receiving = true;
+      Serial.println("Started new message");
+    }
+
     // ตรวจสอบ end marker
-    if (buffer.endsWith("END")) {
-      buffer.replace("END", "");  // ลบ marker
+    else if (receiving && buffer.endsWith("END\n")) {
+      buffer.replace("START\n", "");  // ลบ start marker
+      buffer.replace("END\n", "");    // ลบ end marker
       buffer.trim();
       if (buffer.length() > 0) {
         Serial.println("Full message received:");
@@ -88,6 +106,7 @@ void loop() {
         Serial.println("Empty buffer after trim!");
       }
       buffer = "";
+      receiving = false;
     }
   }
 
@@ -104,12 +123,20 @@ void loop() {
   // }
   
   // ตรวจสอบการเชื่อมต่อ WiFi
-  if (WiFi.status() != WL_CONNECTED) {
+  if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >= WIFI_TIMEOUT)) {
     Serial.println("WiFi disconnected, attempting to reconnect...");
+    WiFi.disconnect();
     WiFi.reconnect();
-    delay(5000);
+    previousMillis = currentMillis;
+    digitalWrite(BUZZER_PIN, HIGH);    
+  }else{
+    digitalWrite(BUZZER_PIN, LOW);     
   }
+  // ส่งแจ้งเตือนตามเวลา
+  systemStatus();
+}
 
+void systemStatus(){
   timeClient.update();
   // ดึงเวลาปัจจุบัน
   int currentHour = timeClient.getHours();
@@ -120,11 +147,10 @@ void loop() {
   if ((currentHour == 8 || currentHour == 12 || currentHour == 16 || 
        currentHour == 20 || currentHour == 0 || currentHour == 4) && 
        currentMinute == 0 && currentSecond == 0) {
-    String testMessage = "🤖 ข้อความทดสอบจากระบบ 🐷🐓 - เวลา: " + String(currentMillis/1000) + " วินาที";
+    String testMessage = "🤖 ข้อความทดสอบจากฟาร์ม 🐷🐓 - เวลา: " + String(currentHour) + ":"+String(currentMinute)+" นาที";
     sendMessageToDiscord(testMessage);
     delay(1000); // รอ 1 วินาทีเพื่อป้องกันการส่งซ้ำ
   }
-
 }
 
 void sendMessageToDiscord(String msg) {
@@ -147,8 +173,7 @@ void sendMessageToDiscord(String msg) {
     // สร้าง JSON payload และ escape อักขระพิเศษ
     String escapedMsg = msg;
     escapedMsg.replace("\"", "\\\""); // escape เครื่องหมาย quote
-    escapedMsg.replace("\n", "\\n");  // escape newline
-    
+    escapedMsg.replace("\n", "\\n");  // escape newline    
     
     String jsonPayload = "{\"content\": \"" + escapedMsg + "\"}";
     
