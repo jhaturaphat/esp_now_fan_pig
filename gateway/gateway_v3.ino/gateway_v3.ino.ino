@@ -15,7 +15,7 @@
 // จำนวน Sensor
 #define MAX_SENSORS 7
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
-#define SIREN_TIMEOUT 60000 // 60 วินาที timeout
+#define SIREN_TIMEOUT 10000 // 10 วินาที timeout
 
 unsigned long lastSensorCheck = 0;
 unsigned long lastComunication = 0;
@@ -107,6 +107,18 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
+
+  // String buffer = "";
+  // while(Serial2.available()){    
+  //   char c = Serial2.read();     
+  //   buffer += c;
+  //   if(buffer.endsWith("STATUS\n")){
+  //     Serial.println(buffer);      
+  //     Serial2.println(getSystemStatus());
+  //   }
+  // }
+  // buffer = "";
+
   
   if(currentMillis - lastSensorCheck >= SIREN_TIMEOUT){ //ทำงานทุกๆ 30 วินาที
     lastSensorCheck = currentMillis;   

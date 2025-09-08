@@ -100,8 +100,8 @@ void loop() {
         Serial.println("=== START ===");
         Serial.println(buffer);
         Serial.println("=== END ===");
-        sendMessageToDiscord("🎉แจ้งเตือนพัดลม ครับ");        
-        sendMessageToDiscord(buffer);
+        sendMessageToDiscord("🎉แจ้งเตือนพัดลม ครับ\n"+buffer);        
+        // sendMessageToDiscord(buffer);
       } else {
         Serial.println("Empty buffer after trim!");
       }
@@ -122,6 +122,10 @@ void loop() {
   //   }
   // }
   
+  // Test Serial2.print("STATUS\n");
+  // if(digitalRead(BUZZER_PIN)){
+  //   Serial2.println("📊STATUS\n");
+  // }
   // ตรวจสอบการเชื่อมต่อ WiFi
   if ((WiFi.status() != WL_CONNECTED)) {
     Serial.println("WiFi disconnected, attempting to reconnect...");
@@ -149,8 +153,9 @@ void systemStatus(){
        currentHour == 20 || currentHour == 0 || currentHour == 4) && 
        currentMinute == 0 && currentSecond == 0) {
     String testMessage = "🤖 ข้อความทดสอบจากฟาร์ม 🐷🐓 - เวลา: " + String(currentHour) + ":"+String(currentMinute)+" นาที";
-    sendMessageToDiscord(testMessage);
+    sendMessageToDiscord(testMessage);    
     delay(1000); // รอ 1 วินาทีเพื่อป้องกันการส่งซ้ำ
+    // Serial2.print("STATUS\n");
   }
 }
 
