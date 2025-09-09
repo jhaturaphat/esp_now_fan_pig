@@ -6,6 +6,7 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+#include <HardwareSerial.h>
 
 // กำหนด PIN
 #define BUZZER_PIN  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
@@ -48,10 +49,11 @@ String offline_sensors = "";
 String open_switches = "";
 String system_status = "";
 
+HardwareSerial mySerial(2);
 
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17); 
+  mySerial.begin(9600, SERIAL_8N1, 16, 17);  // TX=17, RX=16
   // กำหนด PIN Mode
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(SIREN_PIN, OUTPUT);
@@ -59,6 +61,7 @@ void setup() {
   
   // เริ่มต้น WiFi ในโหมด Station
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);  // ป้องกัน WiFi sleep สำหรับ ESP-NOW
   // Serial.println("MAC Address: " + WiFi.macAddress());
   
   // เริ่มต้น ESP-NOW
@@ -108,17 +111,10 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
-  // String buffer = "";
-  // while(Serial2.available()){    
-  //   char c = Serial2.read();     
-  //   buffer += c;
-  //   if(buffer.endsWith("STATUS\n")){
-  //     Serial.println(buffer);      
-  //     Serial2.println(getSystemStatus());
-  //   }
-  // }
-  // buffer = "";
-
+  String buffer = "";
+  while(mySerial.available()){    
+    receiveAndRespond();
+  }
   
   if(currentMillis - lastSensorCheck >= SIREN_TIMEOUT){ //ทำงานทุกๆ 30 วินาที
     lastSensorCheck = currentMillis;   
@@ -242,9 +238,9 @@ void triggerSiren() {
     siren_active = true;
     siren_start_time = millis();
     digitalWrite(SIREN_PIN, HIGH);
-    // Serial.println("🚨 SIREN ACTIVATED! 🚨");
+    Serial.println("🚨 SIREN ACTIVATED! 🚨");
     //ส่งข้อมูลไปยัง ESP ตัวที่ 2
-    Serial2.println(getSystemStatus());   
+    mySerial.println(getSystemStatus());   
     // ปิด buzzer เมื่อเปิดไซเรน
     if (buzzer_active) {
       stopBuzzer();
@@ -289,8 +285,9 @@ void handleAlarms() {
 //📢📢📢📢📢📢📢📢📢📢📢
 void handleComunicationAlarms(){    
   if (buzzer_active && !siren_active) {    
-    Serial2.println(getSystemStatus());     
-    digitalWrite(BUZZER_PIN, HIGH);    
+    mySerial.println(getSystemStatus());     
+    digitalWrite(BUZZER_PIN, HIGH);  
+    Serial.println("🚨 BUZZER ACTIVATED! 🚨");  
   }else{
     digitalWrite(BUZZER_PIN, LOW);
   }
@@ -323,6 +320,56 @@ void testSounds() {
   digitalWrite(SIREN_PIN, LOW);
   
   Serial.println("Sound test complete");
+}
+
+void receiveAndRespond() {
+  if (mySerial.peek() == '$') {  // เช็ค header
+    mySerial.read();  // ทิ้ง header
+    String msg = mySerial.readStringUntil('\n');
+    if (msg.length() > 0) {
+      // Extract checksum
+      char receivedChecksum = msg.charAt(msg.length() - 1);
+      msg = msg.substring(0, msg.length() - 1);  // ตัด checksum
+
+      // คำนวณ checksum
+      byte calcChecksum = 0;
+      for (int i = 0; i < msg.length(); i++) {
+        calcChecksum += (byte)msg.charAt(i);
+      }
+      calcChecksum %= 256;   
+
+      // if (calcChecksum == (byte)receivedChecksum) {
+        if(msg.startsWith("READ")){
+        Serial.println("Received valid: " + msg);  // Debug
+
+        // ส่งอะไรก็ได้กลับ (กำหนดเอง)
+        String response = getSystemStatus();  // ตัวอย่าง: ยืนยันด้วย "ACK:" + ข้อความที่ได้รับ
+        // หรือรวม ESP-NOW: String response = "DATA:" + String(espNowData);
+        // หรือคำสั่ง: String response = "TURN_ON_LED";
+        sendData(response);
+      } else {
+        Serial.println("Checksum error!");
+        sendData("RETRY");  // ขอให้ Slave ส่งซ้ำ
+      }
+    }
+  } else {
+    // Clear buffer ถ้าไม่มี header
+    while (mySerial.available()) mySerial.read();
+  }
+}
+
+void sendData(String msg) {
+  byte checksum = 0;
+  for (int i = 0; i < msg.length(); i++) {
+    checksum += (byte)msg.charAt(i);
+  }
+  checksum %= 256;
+
+  mySerial.print('$');
+  mySerial.print(msg);
+  mySerial.print((char)checksum);
+  mySerial.println();
+  mySerial.flush();
 }
 
 String getSystemStatus(){

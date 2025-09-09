@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <HardwareSerial.h>
 
 #define BUZZER_PIN 18  //Buzzer สำหรับขาดการสือสาร
 
@@ -14,7 +15,7 @@ const char* password = ""; // ใส่รหัสผ่าน WiFi ถ้า�
 const char* webhookUrl = "https://discord.com/api/webhooks/1344992087879188550/vGrbJbJQUkaf_ZmxpzSvm9_1gcwHrEylA-VOQCTrlKsu2gq8mq9tTycQWKT7I8jlQb4n";
 
 unsigned long lastMessage = 0;
-const unsigned long interval = 60000 * 2; // ส่งทุก 60 วินาที
+const unsigned long interval = 60000; // ส่งทุก 60 วินาที
 
 String buffer = "";  // Buffer สำหรับสะสม message
 bool lastWasNewline = false;  // ตรวจสอบ \n ก่อนหน้า
@@ -24,15 +25,18 @@ bool receiving = false;  // Track ว่ากำลังรับ message ห�
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 25200, 60000); // UTC+7 สำหรับประเทศไทย
 
+HardwareSerial mySerial(2);
+
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17); 
+  mySerial.begin(9600, SERIAL_8N1, 16, 17);  // TX=17, RX=16
   
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
 
   // เชื่อมต่อ Wi-Fi
   WiFi.begin(ssid, password);
+  WiFi.setSleep(false);  // ป้องกัน WiFi sleep
   Serial.println("Connecting to WiFi...");
   
   int attempts = 0;
@@ -70,8 +74,8 @@ void loop() {
   const unsigned long dataTimeout = 1000; // รอ 1 วินาที หลังจากไม่มีข้อมูลเพิ่ม
   
   // อ่านข้อมูลที่มีอยู่
-  while (Serial2.available()) {
-    char c = Serial2.read();
+  while (mySerial.available()) {
+    char c = mySerial.read();
     buffer += c;
     // Debug: แสดงทุกตัวอักษรที่ได้รับ
     // Serial.print("Received char: ");
@@ -88,10 +92,7 @@ void loop() {
       buffer = "";  // ล้าง buffer เริ่มใหม่
       receiving = true;
       Serial.println("Started new message");
-    }
-
-    // ตรวจสอบ end marker
-    else if (receiving && buffer.endsWith("END\n")) {
+    }else if (receiving && buffer.endsWith("END\n")) { // ตรวจสอบ end marker
       buffer.replace("START\n", "");  // ลบ start marker
       buffer.replace("END\n", "");    // ลบ end marker
       buffer.trim();
@@ -114,18 +115,17 @@ void loop() {
   
   
   // ส่งข้อความทดสอบทุก 60 วินาที (ถ้าต้องการ)
-  // if (currentMillis - lastMessage > interval) {
+  // if (currentMillis - lastMessage >= interval) {
   //   if (WiFi.status() == WL_CONNECTED) {
   //     String testMessage = "ข้อความทดสอบจาก ESP32 - เวลา: " + String(currentMillis/1000) + " วินาที";
-  //     sendMessageToDiscord(testMessage);
+  //     // sendMessageToDiscord(testMessage);
+  //     Serial.println(testMessage);      
+  //     sendData("READ");     
   //     lastMessage = currentMillis;
   //   }
   // }
   
-  // Test Serial2.print("STATUS\n");
-  // if(digitalRead(BUZZER_PIN)){
-  //   Serial2.println("📊STATUS\n");
-  // }
+  
   // ตรวจสอบการเชื่อมต่อ WiFi
   if ((WiFi.status() != WL_CONNECTED)) {
     Serial.println("WiFi disconnected, attempting to reconnect...");
@@ -139,6 +139,23 @@ void loop() {
   }
   // ส่งแจ้งเตือนตามเวลา
   systemStatus();
+}
+
+void sendData(String msg) {
+  byte checksum = 0;
+  for (int i = 0; i < msg.length(); i++) {
+    checksum += (byte)msg.charAt(i);
+  }
+  checksum %= 256;
+
+  mySerial.print('$');
+  mySerial.print(msg);
+  mySerial.print((char)checksum);
+  mySerial.println();
+  mySerial.flush();
+  Serial.println("Sent: " + msg);  // Debug
+  Serial.print((char)checksum);
+  Serial.println(checksum);  // Debug
 }
 
 void systemStatus(){
@@ -155,7 +172,7 @@ void systemStatus(){
     String testMessage = "🤖 ข้อความทดสอบจากฟาร์ม 🐷🐓 - เวลา: " + String(currentHour) + ":"+String(currentMinute)+" นาที";
     sendMessageToDiscord(testMessage);    
     delay(1000); // รอ 1 วินาทีเพื่อป้องกันการส่งซ้ำ
-    // Serial2.print("STATUS\n");
+    sendData("READ"); 
   }
 }
 
