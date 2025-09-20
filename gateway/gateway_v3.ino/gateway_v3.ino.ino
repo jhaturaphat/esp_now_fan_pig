@@ -285,11 +285,13 @@ void handleAlarms() {
 //📢📢📢📢📢📢📢📢📢📢📢
 void handleComunicationAlarms(){    
   if (buzzer_active && !siren_active) {    
-    mySerial.println(getSystemStatus());     
-    digitalWrite(BUZZER_PIN, HIGH);  
+    mySerial.println(getSystemStatus());   
+    digitalWrite(SIREN_PIN, HIGH);  
+    // digitalWrite(BUZZER_PIN, HIGH);  
     Serial.println("🚨 BUZZER ACTIVATED! 🚨");  
   }else{
-    digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(SIREN_PIN, HIGH);
+    // digitalWrite(BUZZER_PIN, LOW);
   }
 }
 

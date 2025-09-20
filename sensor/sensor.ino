@@ -15,14 +15,14 @@
 #include <espnow.h>
 
 // กำหนดค่าสำคัญ - *** เปลี่ยนในแต่ละ sensor ***
-#define SENSOR_ID 4  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
+#define SENSOR_ID 2  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
 
 // MAC Address ของ Gateway ESP32 - *** ต้องใส่ MAC จริงของ Gateway *** 24:d7:eb:0e:f1:fc
 uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง
 
-// กำหนด PIN
-#define REED_SWITCH_PIN 0   // GPIO0 สำหรับ reed switch
-#define STATUS_LED_PIN 2    // GPIO2 สำหรับ LED สถานะ
+// กำหนด PIN - แก้ไขแล้ว
+#define REED_SWITCH_PIN 2   // GPIO2 สำหรับ reed switch (เปลี่ยนจาก GPIO0)
+#define STATUS_LED_PIN 0    // GPIO0 สำหรับ LED สถานะ (สลับกัน) - หรือไม่ใช้ก็ได้
 
 // โครงสร้างข้อมูลที่ส่งไป Gateway
 typedef struct sensor_message {
@@ -59,6 +59,7 @@ void setup() {
   if (esp_now_init() != 0) {
     // Serial.println("Error initializing ESP-NOW");
     errorBlink();
+    delay(10000);
     ESP.restart();
   }
   
@@ -113,7 +114,7 @@ void loop() {
   }
   
   // เข้าสู่โหมดประหยัดไฟ
-  delay(100);
+  // delay(100);
 }
 
 void sendSensorData(bool is_heartbeat) {
