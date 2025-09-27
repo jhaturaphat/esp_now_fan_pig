@@ -11,15 +11,17 @@
 // กำหนด PIN
 #define BUZZER_PIN18  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN19 19        // Siren สำหรับแจ้งเตือนหลัก
-#define LED_STATUS_PIN2 2    // LED แสดงสถานะ
+#define LED_STATUS_PIN2 5    // LED แสดงสถานะ
 
 // จำนวน Sensor
 #define MAX_SENSORS 7
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
-#define SIREN_TIMEOUT 30000 // 30 วินาที timeout
+#define SIREN_TIMEOUT 120000 // 120 วินาที timeout
+#define CHECK_TIMEOUT 5000 // 5 วินาที timeout
 
 unsigned long lastSensorCheck = 0;
 unsigned long lastComunication = 0;
+
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
 typedef struct sensor_message {
@@ -115,10 +117,9 @@ void loop() {
   while(mySerial.available()){    
     receiveAndRespond();
   }
-  
-  if(currentMillis - lastSensorCheck >= SIREN_TIMEOUT){ //ทำงานทุกๆ 30 วินาที
-    lastSensorCheck = currentMillis;   
-    checkSensorCommunication();
+  checkSensorCommunication();
+  if(currentMillis - lastSensorCheck >= CHECK_TIMEOUT){  //ตรวจสอบทุกๆ 5 วินาที 
+    lastSensorCheck = currentMillis;
     handleAlarms();
     updateStatusLED();
   }
@@ -130,7 +131,7 @@ void loop() {
   }
 
   // ตรวจสอบ Comunication Loss
-  if(currentMillis - lastComunication >= SIREN_TIMEOUT){
+  if(currentMillis - lastComunication >= COMMUNICATION_TIMEOUT){
     lastComunication = currentMillis;
     handleComunicationAlarms();
   }
@@ -153,7 +154,10 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
-      Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+      Serial.printf("🚨🚨🚨🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+    }else{
+      // siren_active = false;
+      stopSiren();
     }
   }
 }
@@ -223,7 +227,7 @@ void checkSensorCommunication() {
   } else if (offline_count > 0 && offline_count < MAX_SENSORS) {  
     // ขาดการสื่อสารบางตัว -> เปิด buzzer
     triggerSiren();
-    triggerBuzzer(); //อันเดิมใช้ตัวนี้
+    // triggerBuzzer(); //อันเดิมใช้ตัวนี้
     Serial.printf("⚠️ WARNING: Partial communication loss - Sensors [%s] offline\n", offline_sensors.c_str());
   } else {
     // ทุก sensor เชื่อมต่อปกติ -> ปิดเสียงเตือน
@@ -265,6 +269,7 @@ void stopSiren() {
   if (siren_active) {
     siren_active = false;
     digitalWrite(SIREN_PIN19, LOW);
+    mySerial.println(getSystemStatus()); 
     Serial.println("✅ SIREN DEACTIVATED");
   }
 }
@@ -273,6 +278,7 @@ void stopBuzzer() {
   if (buzzer_active) {
     buzzer_active = false;
     digitalWrite(BUZZER_PIN18, LOW);
+    mySerial.println(getSystemStatus()); 
     Serial.println("✅ BUZZER DEACTIVATED");
   }
 }
