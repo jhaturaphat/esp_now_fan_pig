@@ -19,8 +19,9 @@
  * 4. RXD สะอาดกว่า TXD (ไม่มี boot message)
  */
 
-#include <ESP8266WiFi.h>
-#include <espnow.h>
+  #include <ESP8266WiFi.h>
+  #include <espnow.h>   //สำหรับ ESP8266
+
 
 // กำหนดค่าสำคัญ - *** เปลี่ยนในแต่ละ sensor ***
 #define SENSOR_ID 1  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว

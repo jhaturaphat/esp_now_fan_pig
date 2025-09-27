@@ -4,19 +4,19 @@
  * Enhanced version - แสดงรายละเอียด sensor ที่ขาดการติดต่อและ switch ที่เปิด
  */
 
-#include <esp_now.h>
+#include <esp_now.h>  //สำหรับ ESP32
 #include <WiFi.h>
 #include <HardwareSerial.h>
 
 // กำหนด PIN
-#define BUZZER_PIN  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
-#define SIREN_PIN 19        // Siren สำหรับแจ้งเตือนหลัก
-#define LED_STATUS_PIN 2    // LED แสดงสถานะ
+#define BUZZER_PIN18  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
+#define SIREN_PIN19 19        // Siren สำหรับแจ้งเตือนหลัก
+#define LED_STATUS_PIN2 2    // LED แสดงสถานะ
 
 // จำนวน Sensor
 #define MAX_SENSORS 7
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
-#define SIREN_TIMEOUT 10000 // 10 วินาที timeout
+#define SIREN_TIMEOUT 30000 // 30 วินาที timeout
 
 unsigned long lastSensorCheck = 0;
 unsigned long lastComunication = 0;
@@ -55,9 +55,9 @@ void setup() {
   Serial.begin(115200);
   mySerial.begin(9600, SERIAL_8N1, 16, 17);  // TX=17, RX=16
   // กำหนด PIN Mode
-  pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(SIREN_PIN, OUTPUT);
-  pinMode(LED_STATUS_PIN, OUTPUT);
+  pinMode(BUZZER_PIN18, OUTPUT);
+  pinMode(SIREN_PIN19, OUTPUT);
+  pinMode(LED_STATUS_PIN2, OUTPUT);
   
   // เริ่มต้น WiFi ในโหมด Station
   WiFi.mode(WIFI_STA);
@@ -153,11 +153,12 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
-      // Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+      Serial.printf("🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
     }
   }
 }
 
+// สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต้ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
 void initializeSensors() {
   for (int i = 0; i < MAX_SENSORS; i++) {
     sensors[i].is_online = false;
@@ -166,7 +167,7 @@ void initializeSensors() {
     memset(sensors[i].mac, 0, 6);
   }
 }
-
+// ตรวจสอบการเชื่อมต่อ
 void checkSensorCommunication() {
   if (millis() - last_check_time < 5000) return;  // ตรวจสอบทุก 5 วินาที
   
@@ -221,12 +222,14 @@ void checkSensorCommunication() {
     Serial.printf("🚨 CRITICAL: Lost communication with ALL sensors! [%s]\n", offline_sensors.c_str());
   } else if (offline_count > 0 && offline_count < MAX_SENSORS) {  
     // ขาดการสื่อสารบางตัว -> เปิด buzzer
-    triggerBuzzer();
+    triggerSiren();
+    triggerBuzzer(); //อันเดิมใช้ตัวนี้
     Serial.printf("⚠️ WARNING: Partial communication loss - Sensors [%s] offline\n", offline_sensors.c_str());
   } else {
     // ทุก sensor เชื่อมต่อปกติ -> ปิดเสียงเตือน
     if (buzzer_active && !siren_active) {
       stopBuzzer();
+      stopSiren();
       Serial.println("✅ All sensors back online - Buzzer deactivated");
     }
   }
@@ -237,7 +240,7 @@ void triggerSiren() {
   if (!siren_active) {
     siren_active = true;
     siren_start_time = millis();
-    digitalWrite(SIREN_PIN, HIGH);
+    digitalWrite(SIREN_PIN19, HIGH);
     Serial.println("🚨 SIREN ACTIVATED! 🚨");
     //ส่งข้อมูลไปยัง ESP ตัวที่ 2
     mySerial.println(getSystemStatus());   
@@ -249,7 +252,7 @@ void triggerSiren() {
 }
 
 void triggerBuzzer() {
-  // Serial.println("📢buzzer_active:"+(String)buzzer_active+"📢siren_active:"+(String)siren_active);
+  Serial.println("📢buzzer_active:"+(String)buzzer_active+"📢siren_active:"+(String)siren_active);
   if (!buzzer_active && !siren_active) {   
     
     buzzer_active = true;
@@ -261,7 +264,7 @@ void triggerBuzzer() {
 void stopSiren() {
   if (siren_active) {
     siren_active = false;
-    digitalWrite(SIREN_PIN, LOW);
+    digitalWrite(SIREN_PIN19, LOW);
     Serial.println("✅ SIREN DEACTIVATED");
   }
 }
@@ -269,7 +272,7 @@ void stopSiren() {
 void stopBuzzer() {
   if (buzzer_active) {
     buzzer_active = false;
-    digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(BUZZER_PIN18, LOW);
     Serial.println("✅ BUZZER DEACTIVATED");
   }
 }
@@ -281,17 +284,17 @@ void handleAlarms() {
   }
 }
 
-// จัดการ buzzer BUZZER_PIN = 18
+// จัดการ buzzer BUZZER_PIN18 = 18
 //📢📢📢📢📢📢📢📢📢📢📢
 void handleComunicationAlarms(){    
   if (buzzer_active && !siren_active) {    
     mySerial.println(getSystemStatus());   
-    digitalWrite(SIREN_PIN, HIGH);  
-    // digitalWrite(BUZZER_PIN, HIGH);  
+    digitalWrite(SIREN_PIN19, HIGH);  
+    // digitalWrite(BUZZER_PIN18, HIGH);  
     Serial.println("🚨 BUZZER ACTIVATED! 🚨");  
   }else{
-    digitalWrite(SIREN_PIN, HIGH);
-    // digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(SIREN_PIN19, LOW);
+    // digitalWrite(BUZZER_PIN18, LOW);
   }
 }
 
@@ -299,27 +302,27 @@ void updateStatusLED() {
   // LED กระพริบแสดงสถานะ
   if (siren_active) {
     // กระพริบเร็วเมื่อไซเรนเปิด
-    digitalWrite(LED_STATUS_PIN, (millis() / 100) % 2);
+    digitalWrite(LED_STATUS_PIN2, (millis() / 100) % 2);
   } else if (buzzer_active) {
     // กระพริบช้าเมื่อ buzzer เปิด
-    digitalWrite(LED_STATUS_PIN, (millis() / 300) % 2);
+    digitalWrite(LED_STATUS_PIN2, (millis() / 300) % 2);
   } else {
     // เปิดค้างเมื่อทำงานปกติ
-    digitalWrite(LED_STATUS_PIN, HIGH);
+    digitalWrite(LED_STATUS_PIN2, HIGH);
   }
 }
 
 void testSounds() {
   Serial.println("Testing buzzer...");
-  digitalWrite(BUZZER_PIN, HIGH);
+  digitalWrite(BUZZER_PIN18, HIGH);
   delay(200);
-  digitalWrite(BUZZER_PIN, LOW);
+  digitalWrite(BUZZER_PIN18, LOW);
   delay(200);
   
   Serial.println("Testing siren...");
-  digitalWrite(SIREN_PIN, HIGH);
+  digitalWrite(SIREN_PIN19, HIGH);
   delay(200);
-  digitalWrite(SIREN_PIN, LOW);
+  digitalWrite(SIREN_PIN19, LOW);
   
   Serial.println("Sound test complete");
 }
