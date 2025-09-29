@@ -155,8 +155,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
       Serial.printf("🚨🚨🚨🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
-    }else{
-      // siren_active = false;
+    }else{      
       stopSiren();
     }
   }
@@ -225,7 +224,7 @@ void checkSensorCommunication() {
     triggerSiren();
     Serial.printf("🚨 CRITICAL: Lost communication with ALL sensors! [%s]\n", offline_sensors.c_str());
   } else if (offline_count > 0 && offline_count < MAX_SENSORS) {  
-    // ขาดการสื่อสารบางตัว -> เปิด buzzer
+    // ขาดการสื่อสารบางตัว -> เปิด buzzer    
     triggerSiren();
     // triggerBuzzer(); //อันเดิมใช้ตัวนี้
     Serial.printf("⚠️ WARNING: Partial communication loss - Sensors [%s] offline\n", offline_sensors.c_str());
@@ -241,10 +240,10 @@ void checkSensorCommunication() {
 
 //🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 void triggerSiren() {  
-  if (!siren_active) {
+  // if (!siren_active) {
     siren_active = true;
     siren_start_time = millis();
-    digitalWrite(SIREN_PIN19, HIGH);
+    digitalWrite(SIREN_PIN19, LOW); //แจ้งเตือน Siren Active LOW
     Serial.println("🚨 SIREN ACTIVATED! 🚨");
     //ส่งข้อมูลไปยัง ESP ตัวที่ 2
     mySerial.println(getSystemStatus());   
@@ -252,25 +251,24 @@ void triggerSiren() {
     if (buzzer_active) {
       stopBuzzer();
     }
-  }
-}
-
-void triggerBuzzer() {
-  Serial.println("📢buzzer_active:"+(String)buzzer_active+"📢siren_active:"+(String)siren_active);
-  if (!buzzer_active && !siren_active) {   
-    
-    buzzer_active = true;
-    buzzer_start_time = millis();
-    Serial.println("🎉 BUZZER ACTIVATED! 🎉");
-  }
+  // }
 }
 
 void stopSiren() {
   if (siren_active) {
     siren_active = false;
-    digitalWrite(SIREN_PIN19, LOW);
+    digitalWrite(SIREN_PIN19, HIGH);
     mySerial.println(getSystemStatus()); 
     Serial.println("✅ SIREN DEACTIVATED");
+  }
+}
+
+void triggerBuzzer() {
+  Serial.println("📢buzzer_active:"+(String)buzzer_active+"📢siren_active:"+(String)siren_active);
+  if (!buzzer_active && !siren_active) {       
+    buzzer_active = true;
+    buzzer_start_time = millis();
+    Serial.println("🎉 BUZZER ACTIVATED! 🎉");
   }
 }
 
@@ -285,8 +283,8 @@ void stopBuzzer() {
 
 void handleAlarms() {
   // จัดการไซเรน (เปิดไว้ 10 วินาที)    
-  if (siren_active && ((millis() - siren_start_time > SIREN_TIMEOUT))) {
-    stopSiren();    
+  if (siren_active && ((millis() - siren_start_time > SIREN_TIMEOUT))) {    
+    stopSiren();     
   }
 }
 
@@ -295,11 +293,11 @@ void handleAlarms() {
 void handleComunicationAlarms(){    
   if (buzzer_active && !siren_active) {    
     mySerial.println(getSystemStatus());   
-    digitalWrite(SIREN_PIN19, HIGH);  
+    digitalWrite(SIREN_PIN19, LOW);  //แจ้งเตือน Siren Active LOW
     // digitalWrite(BUZZER_PIN18, HIGH);  
     Serial.println("🚨 BUZZER ACTIVATED! 🚨");  
   }else{
-    digitalWrite(SIREN_PIN19, LOW);
+    digitalWrite(SIREN_PIN19, HIGH);
     // digitalWrite(BUZZER_PIN18, LOW);
   }
 }
@@ -320,15 +318,15 @@ void updateStatusLED() {
 
 void testSounds() {
   Serial.println("Testing buzzer...");
-  digitalWrite(BUZZER_PIN18, HIGH);
-  delay(200);
   digitalWrite(BUZZER_PIN18, LOW);
+  delay(200);
+  digitalWrite(BUZZER_PIN18, HIGH);
   delay(200);
   
   Serial.println("Testing siren...");
-  digitalWrite(SIREN_PIN19, HIGH);
-  delay(200);
   digitalWrite(SIREN_PIN19, LOW);
+  delay(200);
+  digitalWrite(SIREN_PIN19, HIGH);
   
   Serial.println("Sound test complete");
 }
@@ -388,9 +386,9 @@ String getSystemStatus(){
   for (int i = 0; i < MAX_SENSORS; i++) {
     // String status_icon = sensors[i].is_online ? "🟢" : "🔴";
     String status_icon = sensors[i].is_online ? "🟢" : sensors[i].last_seen > 0 ? "🔴" : "⚫" ;
-    String switch_icon = sensors[i].switch_state ? "🔒" : "🚨";
+    String switch_icon = sensors[i].switch_state ? "☃️" : "🚨";
     String connection = sensors[i].is_online ? "ONLINE " : "OFFLINE";
-    String switch_status = sensors[i].switch_state ? "CLOSED" : "OPEN  ";
+    String switch_status = sensors[i].switch_state ? "ปกติ" : "ฉุกเฉิน  ";
     
     unsigned long time_since_last = sensors[i].last_seen > 0 ? (millis() - sensors[i].last_seen) / 1000 : 0;
     
@@ -416,9 +414,9 @@ void printSystemStatus() {
   for (int i = 0; i < MAX_SENSORS; i++) {
     // String status_icon = sensors[i].is_online ? "🟢" : "🔴";
     String status_icon = sensors[i].is_online ? "🟢" : sensors[i].last_seen > 0  ? "🔴" : "⚫" ;
-    String switch_icon = sensors[i].switch_state ? "🔒" : "🚨";
+    String switch_icon = sensors[i].switch_state ? "☃️" : "🚨";
     String connection = sensors[i].is_online ? "ONLINE " : "OFFLINE";
-    String switch_status = sensors[i].switch_state ? "CLOSED" : "OPEN  ";
+    String switch_status = sensors[i].switch_state ? "ปกติ" : "ฉุกเฉิน  ";
     
     unsigned long time_since_last = sensors[i].last_seen > 0 ? (millis() - sensors[i].last_seen) / 1000 : 0;
     
