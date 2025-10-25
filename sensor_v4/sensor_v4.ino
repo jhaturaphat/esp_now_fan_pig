@@ -18,10 +18,8 @@
  * 3. ห้ามใช้ Serial.print() ใดๆ
  * 4. RXD สะอาดกว่า TXD (ไม่มี boot message)
  */
-
-  #include <ESP8266WiFi.h>
-  #include <ESPAsyncTCP.h>
-  #include <ESPAsyncWebServer.h>
+  #include "ConfigManager.h"
+  #include <ESP8266WiFi.h> 
   #include <espnow.h>   //สำหรับ ESP8266
 
 
@@ -29,11 +27,13 @@
 #define SENSOR_ID 1  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
 
 // MAC Address ของ Gateway ESP32 - *** ต้องใส่ MAC จริงของ Gateway *** 24:d7:eb:0e:f1:fc
-uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง
+//uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง 40:91:51:AD:6D:08
+uint8_t gateway_mac[] = {0x40, 0x91, 0x51, 0xAD, 0x6D, 0x08};
+
 
 // กำหนด PIN - ใช้ RXD (GPIO3)
 #define REED_SWITCH_PIN 3   // GPIO3 (RXD) สำหรับ reed switch
-#define CONFIG_BUTTON_PIN 2 // GPIO2 
+
 #define STATUS_LED_PIN 2    // GPIO2 สำหรับ LED สถานะ
 
 // โครงสร้างข้อมูลที่ส่งไป Gateway
@@ -50,14 +50,27 @@ unsigned long last_heartbeat = 0;
 const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
 const unsigned long HEARTBEAT_INTERVAL = 10000; // ส่ง heartbeat ทุก 10 วินาที
 
+// 1. สร้าง Object ของ ConfigManager
+ConfigManager cfgManager;
+// 2. ตัวแปรสำหรับเก็บค่าที่ดึงมาจาก ConfigManager
+DeviceConfig myConfig;
+
 void setup() {
+  // Serial.begin(115200);  
+  // เรียกใช้เมธอด begin()
+  // begin() จะตรวจสอบสวิตช์และค่าใน EEPROM
+  // ถ้าจำเป็น มันจะรัน Web Server และไม่กลับมาจนกว่าจะรีสตาร์ท
+  delay(5000); //รอผู้ใช้กดปุ่มเพื่อตั้งค่า
+  cfgManager.begin();  
+  // เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว
+  // Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
+  myConfig = cfgManager.getConfig();
+  
+  // Serial.print("ID = ");
+  // Serial.println(myConfig.deviceID);
+
   // *** สำคัญ: ห้ามใช้ Serial.begin() เพราะใช้ RXD เป็น GPIO ***
-  // Serial.begin(115200);
-  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
-  delay(50);
-  if(digitalRead(CONFIG_BUTTON_PIN) == LOW){ // Switch ถูกกด (ดึงขาลง GND)
-    // เข้าสู่โหมดตั้งค่า
-  }
+  
   // กำหนด PIN Mode
   pinMode(REED_SWITCH_PIN, INPUT_PULLUP);  // GPIO3 (RXD) สำหรับ reed switch
   pinMode(STATUS_LED_PIN, OUTPUT);         // GPIO2 สำหรับ LED
@@ -74,7 +87,7 @@ void setup() {
   
   // เริ่มต้น ESP-NOW
   if (esp_now_init() != 0) {
-    // Serial.println("Error initializing ESP-NOW");
+    //Serial.println("Error initializing ESP-NOW");
     errorBlink();
     ESP.restart();
   }
@@ -85,9 +98,9 @@ void setup() {
   // ลงทะเบียน callback สำหรับการส่งข้อมูล
   esp_now_register_send_cb(onDataSent);
   
-  // เพิ่ม Gateway เป็น Peer
+    // เพิ่ม Gateway เป็น Peer  
   if (esp_now_add_peer(gateway_mac, ESP_NOW_ROLE_SLAVE, 1, NULL, 0) != 0) {
-    // Serial.println("Failed to add Gateway as peer");
+    //Serial.println("Failed to add Gateway as peer");
     errorBlink();
   }
   
@@ -135,7 +148,7 @@ void loop() {
 
 void sendSensorData(bool is_heartbeat) {
   sensor_message msg;
-  msg.sensor_id = SENSOR_ID;
+  msg.sensor_id = myConfig.deviceID;
   msg.switch_status = digitalRead(REED_SWITCH_PIN);
   msg.timestamp = millis();
   
@@ -164,9 +177,9 @@ void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void blinkStatusLED() {
   for (int i = 0; i < 3; i++) {
     digitalWrite(STATUS_LED_PIN, LOW);
-    delay(100);
+    delay(300);
     digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(100);
+    delay(300);
   }
 }
 
@@ -174,8 +187,8 @@ void errorBlink() {
   // กระพริบเร็วแสดงข้อผิดพลาด
   for (int i = 0; i < 10; i++) {
     digitalWrite(STATUS_LED_PIN, LOW);
-    delay(50);
+    delay(100);
     digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(50);
+    delay(100);
   }
 }

@@ -14,7 +14,7 @@
 #define LED_STATUS_PIN2 5    // LED แสดงสถานะ
 
 // จำนวน Sensor
-#define MAX_SENSORS 7
+#define MAX_SENSORS 10
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
 #define SIREN_TIMEOUT 120000 // 120 วินาที timeout
 #define CHECK_TIMEOUT 5000 // 5 วินาที timeout
@@ -399,6 +399,44 @@ String getSystemStatus(){
   }
   
   return system_status += "END\n";  // จบด้วย marker;
+}
+
+String getSystemStatusJson() {
+  // สร้าง JSON document (กำหนดขนาดตามจำนวนเซ็นเซอร์)
+  DynamicJsonDocument doc(1024 + MAX_SENSORS * 200); // ปรับขนาดตามจำนวนเซ็นเซอร์
+
+  // สร้าง array สำหรับเก็บข้อมูลเซ็นเซอร์
+  JsonArray sensorArray = doc.createNestedArray("sensors");
+
+  // วนลูปเพื่อเพิ่มข้อมูลเซ็นเซอร์แต่ละตัว
+  for (int i = 0; i < MAX_SENSORS; i++) {
+    JsonObject sensor = sensorArray.createNestedObject();
+    sensor["id"] = i + 1; // Sensor ID (เริ่มจาก 1)
+    
+    // กำหนดสถานะการเชื่อมต่อ
+    String status_icon = sensors[i].is_online ? "🟢" : (sensors[i].last_seen > 0 ? "🔴" : "⚫");
+    sensor["status_icon"] = status_icon;
+    sensor["connection"] = sensors[i].is_online ? "ONLINE" : "OFFLINE";
+    
+    // กำหนดสถานะสวิตช์
+    String switch_icon = sensors[i].switch_state ? "☃️" : "🚨";
+    sensor["switch_icon"] = switch_icon;
+    sensor["switch_status"] = sensors[i].switch_state ? "ปกติ" : "ฉุกเฉิน";
+    
+    // คำนวณเวลาที่เห็นล่าสุด
+    unsigned long time_since_last = sensors[i].last_seen > 0 ? (millis() - sensors[i].last_seen) / 1000 : 0;
+    sensor["last_seen_seconds"] = time_since_last;
+  }
+
+  // // เพิ่ม marker เริ่มต้นและสิ้นสุด (ถ้าต้องการ)
+  // doc["start_marker"] = "START";
+  // doc["end_marker"] = "END";
+
+  // แปลง JSON object เป็นสตริง
+  String jsonOutput;
+  serializeJson(doc, jsonOutput);
+  
+  return jsonOutput;
 }
 
 void printSystemStatus() {
