@@ -146,8 +146,7 @@ void loop() {
         // ส่งข้อมูลเมื่อยืนยันแล้วว่าสถานะเปลี่ยนจริงๆ
         confirmed_switch_state = last_switch_state;
         sendSensorData(false);
-        last_send_time = current_time;
-        
+        last_send_time = current_time;        
         // กระพริบ LED เมื่อส่งข้อมูล
         blinkStatusLED();
       }
@@ -158,6 +157,7 @@ void loop() {
   if (current_time - last_heartbeat > HEARTBEAT_INTERVAL) {
     sendSensorData(true);
     last_heartbeat = current_time;
+    // กระพริบ LED เมื่อส่งข้อมูล
     blinkStatusLED();
   }
   
@@ -189,7 +189,6 @@ void sendSensorData(bool is_heartbeat) {
 void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   if (sendStatus == 0) {
     //Serial.println("Data sent successfully");
-    blinkStatusLED();
   } else {
     //Serial.println("Error sending data");
     errorBlink();
@@ -197,11 +196,11 @@ void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 }
 
 void blinkStatusLED() {
-  for (int i = 0; i < 3; i++) {
-    digitalWrite(STATUS_LED_PIN, LOW);
-    delay(300);
+  for (int i = 0; i < 4; i++) {
     digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(300);
+    delay(100);
+    digitalWrite(STATUS_LED_PIN, LOW);
+    delay(100);
   }
 }
 
