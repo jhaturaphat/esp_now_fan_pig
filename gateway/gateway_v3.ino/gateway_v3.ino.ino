@@ -7,7 +7,10 @@
 #include <esp_now.h>  //สำหรับ ESP32
 #include <WiFi.h>
 #include <HardwareSerial.h>
+#include <ArduinoJson.h>
 
+
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // กำหนด PIN
 #define BUZZER_PIN18  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN19 19        // Siren สำหรับแจ้งเตือนหลัก
@@ -125,16 +128,45 @@ void loop() {
   }
   
   // แสดงสถานะระบบทุก 10 วินาที
-  if (currentMillis - last_status_print >= 10000) {
+  if (currentMillis - last_status_print >= 5000) {
     last_status_print = currentMillis;
+    #if defined(DEBUG)
     printSystemStatus();
+    #endif
   }
 
   // ตรวจสอบ Comunication Loss
   if(currentMillis - lastComunication >= COMMUNICATION_TIMEOUT){
     lastComunication = currentMillis;
     handleComunicationAlarms();
+    monitorMemory();
   }
+}
+
+// ตัวแปรสำหรับเก็บค่าหน่วยความจำฮีปที่เหลือล่าสุด
+long lastFreeHeap = 0;
+
+// ฟังก์ชันสำหรับตรวจสอบและรายงานหน่วยความจำฮีปที่เหลือ
+void monitorMemory() {
+  // รับค่าหน่วยความจำฮีปที่เหลือปัจจุบัน
+  long currentFreeHeap = ESP.getFreeHeap();
+
+  Serial.println("--- Memory Monitor ---");
+  Serial.printf("Current Free Heap: %ld bytes\n", currentFreeHeap);
+
+  // เปรียบเทียบกับค่าล่าสุดเพื่อดูว่ามีการเปลี่ยนแปลงหรือไม่
+  if (lastFreeHeap != 0) {
+    long heapChange = currentFreeHeap - lastFreeHeap;
+    Serial.printf("Change from last check: %ld bytes\n", heapChange);
+    // หากค่า Free Heap ลดลง แสดงว่ามีการใช้หน่วยความจำเพิ่มขึ้น
+    if (heapChange < 0) {
+      Serial.println("WARNING: Heap memory is decreasing.");
+    }
+  }
+
+  // อัปเดตค่าล่าสุด
+  lastFreeHeap = currentFreeHeap;
+  Serial.println("----------------------");
 }
 
 // Callback สำหรับรับข้อมูล (สำหรับ ESP32 Arduino Core 3.x)
@@ -154,7 +186,9 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // ตรวจสอบสถานะ switch
     if (!msg.switch_status) {  // switch เปิด (แม่เหล็กออกจากกัน)
       triggerSiren();
+    #if defined(DEBUG)
       Serial.printf("🚨🚨🚨🚨ALERT: Sensor %d detected intrusion!\n", msg.sensor_id);
+    #endif
     }else{      
       stopSiren();
     }
@@ -187,7 +221,9 @@ void checkSensorCommunication() {
     if (sensors[i].last_seen > 0) {  // sensor เคยส่งข้อมูลมาแล้ว
       if (millis() - sensors[i].last_seen > COMMUNICATION_TIMEOUT) {
         if (sensors[i].is_online) {
+          #if defined(DEBUG)
           Serial.printf("⚠️ WARNING: Lost communication with Sensor %d\n", i + 1);
+          #endif
           sensors[i].is_online = false;
         }
         offline_count++;        
@@ -209,31 +245,41 @@ void checkSensorCommunication() {
   
   // แสดงรายงานสถานะ
   if (offline_count > 0) {
+    #if defined(DEBUG)
     Serial.printf("📡 COMMUNICATION LOST: Sensors [%s] (%d/%d sensors)\n", 
                   offline_sensors.c_str(), offline_count, MAX_SENSORS);
+    #endif
   }
   
   if (open_switch_count > 0) {
+    #if defined(DEBUG)
     Serial.printf("🚨 SWITCHES OPEN: Sensors [%s] (%d switches open)\n", 
                   open_switches.c_str(), open_switch_count);
+    #endif
   }
   
   // จัดการเสียงเตือนตามจำนวน sensor ที่ขาดการสื่อสาร
   if (offline_count == MAX_SENSORS) {
     // ขาดการสื่อสารทั้งหมด -> เปิดไซเรน
     triggerSiren();
+    #if defined(DEBUG)
     Serial.printf("🚨 CRITICAL: Lost communication with ALL sensors! [%s]\n", offline_sensors.c_str());
+    #endif
   } else if (offline_count > 0 && offline_count < MAX_SENSORS) {  
     // ขาดการสื่อสารบางตัว -> เปิด buzzer    
     triggerSiren();
     // triggerBuzzer(); //อันเดิมใช้ตัวนี้
+    #if defined(DEBUG)
     Serial.printf("⚠️ WARNING: Partial communication loss - Sensors [%s] offline\n", offline_sensors.c_str());
+    #endif
   } else {
     // ทุก sensor เชื่อมต่อปกติ -> ปิดเสียงเตือน
     if (buzzer_active && !siren_active) {
       stopBuzzer();
       stopSiren();
+      #if defined(DEBUG)
       Serial.println("✅ All sensors back online - Buzzer deactivated");
+      #endif
     }
   }
 }
@@ -244,7 +290,9 @@ void triggerSiren() {
     siren_active = true;
     siren_start_time = millis();
     digitalWrite(SIREN_PIN19, LOW); //แจ้งเตือน Siren Active LOW
+    #if defined(DEBUG)
     Serial.println("🚨 SIREN ACTIVATED! 🚨");
+    #endif
     //ส่งข้อมูลไปยัง ESP ตัวที่ 2
     mySerial.println(getSystemStatus());   
     // ปิด buzzer เมื่อเปิดไซเรน
@@ -259,16 +307,22 @@ void stopSiren() {
     siren_active = false;
     digitalWrite(SIREN_PIN19, HIGH);
     mySerial.println(getSystemStatus()); 
+    #if defined(DEBUG)
     Serial.println("✅ SIREN DEACTIVATED");
+    #endif
   }
 }
 
 void triggerBuzzer() {
+  #if defined(DEBUG)
   Serial.println("📢buzzer_active:"+(String)buzzer_active+"📢siren_active:"+(String)siren_active);
+  #endif
   if (!buzzer_active && !siren_active) {       
     buzzer_active = true;
     buzzer_start_time = millis();
+    #if defined(DEBUG)
     Serial.println("🎉 BUZZER ACTIVATED! 🎉");
+    #endif
   }
 }
 
@@ -277,7 +331,9 @@ void stopBuzzer() {
     buzzer_active = false;
     digitalWrite(BUZZER_PIN18, LOW);
     mySerial.println(getSystemStatus()); 
+    #if defined(DEBUG)
     Serial.println("✅ BUZZER DEACTIVATED");
+    #endif
   }
 }
 
@@ -317,18 +373,22 @@ void updateStatusLED() {
 }
 
 void testSounds() {
+  #if defined(DEBUG)
   Serial.println("Testing buzzer...");
+  #endif
   digitalWrite(BUZZER_PIN18, LOW);
   delay(200);
   digitalWrite(BUZZER_PIN18, HIGH);
   delay(200);
-  
+  #if defined(DEBUG)
   Serial.println("Testing siren...");
+  #endif
   digitalWrite(SIREN_PIN19, LOW);
   delay(200);
   digitalWrite(SIREN_PIN19, HIGH);
-  
+  #if defined(DEBUG)
   Serial.println("Sound test complete");
+  #endif
 }
 
 void receiveAndRespond() {
@@ -349,15 +409,18 @@ void receiveAndRespond() {
 
       // if (calcChecksum == (byte)receivedChecksum) {
         if(msg.startsWith("READ")){
+        #if defined(DEBUG)
         Serial.println("Received valid: " + msg);  // Debug
-
+        #endif
         // ส่งอะไรก็ได้กลับ (กำหนดเอง)
         String response = getSystemStatus();  // ตัวอย่าง: ยืนยันด้วย "ACK:" + ข้อความที่ได้รับ
         // หรือรวม ESP-NOW: String response = "DATA:" + String(espNowData);
         // หรือคำสั่ง: String response = "TURN_ON_LED";
         sendData(response);
       } else {
+        #if defined(DEBUG)
         Serial.println("Checksum error!");
+        #endif
         sendData("RETRY");  // ขอให้ Slave ส่งซ้ำ
       }
     }
@@ -450,7 +513,7 @@ void printSystemStatus() {
   int open_count = 0;
   
   for (int i = 0; i < MAX_SENSORS; i++) {
-    // String status_icon = sensors[i].is_online ? "🟢" : "🔴";
+    
     String status_icon = sensors[i].is_online ? "🟢" : sensors[i].last_seen > 0  ? "🔴" : "⚫" ;
     String switch_icon = sensors[i].switch_state ? "☃️" : "🚨";
     String connection = sensors[i].is_online ? "ONLINE " : "OFFLINE";
@@ -463,29 +526,30 @@ void printSystemStatus() {
                   status_icon.c_str(), connection.c_str(),
                   switch_icon.c_str(), switch_status.c_str(),
                   time_since_last);   
-
+    
     if (sensors[i].is_online) online_count++;
     else offline_count++;
     
     if (!sensors[i].switch_state) open_count++;
-  } 
-  
+  }   
   
   Serial.println("─────────────────────────────────────────");
   Serial.printf("📊 Summary: %d Online │ %d Offline │ %d Switches Open\n", 
                 online_count, offline_count, open_count);
   
   if (offline_count > 0) {
+    
     Serial.printf("📡 Offline Sensors: [%s]\n", offline_sensors.c_str());
+    
   }
   
-  if (open_count > 0) {
-    Serial.printf("🚨 Open Switches: [%s]\n", open_switches.c_str());
-  }
-  
+  if (open_count > 0) {    
+    Serial.printf("🚨 Open Switches: [%s]\n", open_switches.c_str());   
+  }  
   Serial.printf("🔊 Alarms: %s%s\n", 
                 siren_active ? "SIREN " : "",
                 buzzer_active ? "BUZZER " : "");
   
   Serial.println("═════════════════════════════════════════\n");
+  
 }
