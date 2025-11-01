@@ -7,7 +7,7 @@
 // --- โครงสร้างข้อมูลสำหรับเก็บการตั้งค่า ---
 struct DeviceConfig {
     uint8_t deviceID = 0;
-    uint8_t gatewayMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t gatewayMAC[6] = {0x24, 0xD7, 0xEB, 0x0E, 0xE8, 0xC8};
 };
 
 // --- HTML Template (อยู่นอกคลาส) ---
@@ -92,7 +92,7 @@ private:
     const int EEPROM_SIZE = sizeof(DeviceConfig);
 
     // --- Web Server Objects ---    
-    AsyncWebServer server(80);
+    AsyncWebServer server;
     // const char* ap_ssid = "ESP_SETUP";
     const char* PARAM_ID = "id";
     const char* PARAM_MAC = "mac";

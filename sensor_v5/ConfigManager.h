@@ -4,55 +4,69 @@
 #include <DNSServer.h>
 #include <ESP8266mDNS.h> // เพิ่มไลบรารี mDNS
 
-#define MAX_ID 99
-
+#define MAX_ID 10
+#define MAX_CH 13
+#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // --- โครงสร้างข้อมูลสำหรับเก็บการตั้งค่า ---
 struct DeviceConfig {
     uint8_t deviceID = 0;
-    uint8_t gatewayMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t channel = 1;
+    uint8_t gatewayMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};    
 };
 
 // --- HTML Template (อยู่นอกคลาส) ---
 const char index_html[] PROGMEM = R"rawliteral(
- <!DOCTYPE HTML><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP Config</title><style>
-body{font-family:Arial;margin:0;padding:0;text-align:center;background:#f9f9f9}
-h1{margin:20px;font-size:2em}
-.container{max-width:500px;margin:20px auto;padding:20px;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
-form{display:flex;flex-direction:column}
-label{text-align:left;margin-top:10px;font-weight:bold}
-input[type=number],input[type=text]{padding:10px;margin-top:5px;border:1px solid #ccc;border-radius:4px;font-size:16px}
-.btn{background:#4CAF50;color:#fff;padding:12px;margin-top:20px;border:none;border-radius:5px;font-size:16px;cursor:pointer}
-.btn:hover{background:#45a049}
-.message{margin-top:15px;font-size:16px}
-.error{color:red}.success{color:green}
-@media(max-width:600px){h1{font-size:1.5em}.container{margin:10px;padding:15px}.btn{padding:10px;font-size:15px}}
-</style></head><body>
-<h1>ESP Config</h1>
-<div class="container">
-<form id="configForm" onsubmit="submitForm(event)">
-<label for="id">Device ID (1-99):</label>
-<input type="number" id="id" name="id" min="1" max="99" value="%ID_VALUE%" required>
-<label for="mac">Gateway MAC (XX:XX:XX:XX:XX:XX):</label>
-<input type="text" id="mac" name="mac" pattern="[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}" value="%MAC_VALUE%" required>
-<input type="submit" value="Save & Restart" class="btn">
-</form>
-<div id="message" class="message"></div>
-</div>
-<script>
-function trimInputs(){let id=document.getElementById('id');let mac=document.getElementById('mac');if(id)id.value=id.value.trim();if(mac)mac.value=mac.value.trim().toUpperCase();}
-async function submitForm(e){e.preventDefault();trimInputs();let f=document.getElementById('configForm');let m=document.getElementById('message');let d=new FormData(f);
-try{let r=await fetch('/save',{method:'POST',body:d});
-if(r.ok){m.textContent='Saved successfully!';m.className='message success';}
-else{let t=await r.text();m.textContent='Error: '+t;m.className='message error';}
-}catch(e){m.textContent='Error: Failed to connect to server';m.className='message error';}}
-</script></body></html>
+ 	<!DOCTYPE HTML><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP Config</title><style>
+    body{font-family:Arial;margin:0;padding:0;text-align:center;background:#f9f9f9}
+    h1{margin:20px;font-size:2em}
+    .container{max-width:500px;margin:20px auto;padding:20px;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+    form{display:flex;flex-direction:column}
+    label{text-align:left;margin-top:10px;font-weight:bold}
+    input[type=number],input[type=text]{padding:10px;margin-top:5px;border:1px solid #ccc;border-radius:4px;font-size:16px}
+    .btn{background:#4CAF50;color:#fff;padding:12px;margin-top:20px;border:none;border-radius:5px;font-size:16px;cursor:pointer}
+    .btn:hover{background:#45a049}
+    .message{margin-top:15px;font-size:16px}
+    .error{color:red}.success{color:green}
+    @media(max-width:600px){h1{font-size:1.5em}.container{margin:10px;padding:15px}.btn{padding:10px;font-size:15px}}
+    </style></head><body>
+    <h1>Sensor Config</h1>
+    <div class="container">
+    <form id="configForm" onsubmit="submitForm(event)">
+    <label for="id">Sensor ID (1-10):</label>
+    <input type="number" id="id" name="id" min="1" max="10" value="%ID_VALUE%" placeholder="1-10" required>
+    <label for="ch">Channel ID (1-13):</label>
+    <input type="number" id="channel" name="channel" min="1" max="13" value="%CH_VALUE%" placeholder="1-13" required>
+    <label for="mac">Gateway MAC (1F:2F:3F:4F:5F:6F):</label>
+    <input type="text" id="mac" name="mac" pattern="[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}" value="%MAC_VALUE%" required>
+    <input type="submit" value="Save & Restart" class="btn">
+    </form>
+    <div id="message" class="message"></div>
+    <div>Copyright by Mr.Jaturapat Siriboon</div>
+    </div>
+    <script>
+    function trimInputs(){
+    let id=document.getElementById('id');
+    let ch=document.getElementById('ch');
+    let mac=document.getElementById('mac');    
+    if(mac)mac.value=mac.value.trim().toUpperCase();
+    }
+    async function submitForm(e){e.preventDefault();
+    trimInputs();
+    let f=document.getElementById('configForm');
+    let m=document.getElementById('message');
+    let d=new FormData(f);
+    try{let r=await fetch('/save',{method:'POST',body:d});
+    if(r.ok){m.textContent='Saved successfully!';m.className='message success';}
+    else{let t=await r.text();m.textContent='Error: '+t;m.className='message error';}
+    }catch(e){m.textContent='Error: Failed to connect to server';m.className='message error';}}
+    </script></body></html>
 
 )rawliteral";
 
 class ConfigManager {
 private:
     // --- ตั้งค่า Hardware และ EEPROM ---
-    const int CONFIG_BUTTON_PIN = 0; // GPIO0: Input (LOW = Config Mode)
+    // const int CONFIG_BUTTON_PIN = 0; // GPIO0: Input (LOW = Config Mode)
     const int LED_PIN = 2;           // GPIO2: Output (LED status)
     const int EEPROM_SIZE = sizeof(DeviceConfig);
 
@@ -62,6 +76,7 @@ private:
     const byte DNS_PORT = 53;
     // const char* ap_ssid = "ESP_SETUP";
     const char* PARAM_ID = "id";
+    const char* PARAM_CH = "channel";
     const char* PARAM_MAC = "mac";
 
     // --- ตัวแปรสำหรับเก็บค่า ---
@@ -86,6 +101,11 @@ private:
         if(var == "ID_VALUE"){
             return String(currentConfig.deviceID);
         }
+
+        if(var == "CH_VALUE"){
+            return String(currentConfig.channel);
+        }
+
         if(var == "MAC_VALUE"){
             char macStr[18];
             sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", 
@@ -131,7 +151,18 @@ private:
         // หน้าหลัก (แสดงฟอร์ม)
       server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request){
         String html = index_html; // ดึงจาก PROGMEM
-        html.replace("%ID_VALUE%", String(currentConfig.deviceID));
+        if(currentConfig.deviceID > 10){
+            html.replace("%ID_VALUE%", "");
+        }else{
+            html.replace("%ID_VALUE%", String(currentConfig.deviceID));
+        }
+
+        if(currentConfig.channel > 13){
+            html.replace("%CH_VALUE%", "");
+        }else{
+            html.replace("%CH_VALUE%", String(currentConfig.channel));
+        }
+        
 
         char macStr[18];
         sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X",
@@ -161,6 +192,18 @@ private:
                 this->currentConfig.deviceID = (uint8_t)id;
             } else {
                 msg = "Invalid ID! Must be 1-"+MAX_ID; 
+                valid = false;
+            }
+        } else { valid = false; }
+
+        // รับ CH
+        if(request->hasParam(PARAM_CH, true)){
+            String chStr = request->getParam(PARAM_CH, true)->value();
+            uint16_t ch = chStr.toInt();
+            if(ch >= 1 && ch <= MAX_CH) {
+                this->currentConfig.channel = (uint8_t)ch;
+            } else {
+                msg = "Invalid ID! Must be 1-"+MAX_CH; 
                 valid = false;
             }
         } else { valid = false; }
@@ -212,18 +255,18 @@ private:
 public:
     // Constructor
     ConfigManager() : server(80) {}
-
+    
     // Public Method: โหลดค่าและตัดสินใจเข้าโหมดตั้งค่า
-    bool begin() {
+    bool begin(int PIN_CONFIG) {
         EEPROM.begin(EEPROM_SIZE);
         pinMode(LED_PIN, OUTPUT);
         digitalWrite(LED_PIN, LOW);
         
         // 1. ตรวจสอบการกดสวิตช์เพื่อเข้าโหมดตั้งค่า
-        pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
+        pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
         delay(100); 
 
-        bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
+        bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
         
         // 2. โหลดค่า
         EEPROM.get(0, currentConfig);
@@ -233,20 +276,24 @@ public:
 
         if (switchPressed || !configValid) {
             // เข้าโหมดตั้งค่าถ้า: (1) สวิตช์ถูกกด หรือ (2) ค่าที่โหลดมาไม่ถูกต้อง
-            // if (switchPressed) Serial.println("ConfigManager: Switch pressed. Entering Config Mode.");
-            // if (!configValid) Serial.println("ConfigManager: Invalid config found. Entering Config Mode.");
+            #if defined(DEBUG)
+            if (switchPressed) Serial.println("ConfigManager: Switch pressed. Entering Config Mode.");
+            if (!configValid) Serial.println("ConfigManager: Invalid config found. Entering Config Mode.");
+            #endif
             
             enterConfigMode(); 
             // โค้ดจะหยุดที่นี่ (ใน enterConfigMode) จนกว่าจะมีการรีสตาร์ท
         }
 
         // 4. โหมดทำงานปกติ
-        // Serial.print("ConfigManager: Normal Operation (ID: "); 
-        // Serial.print(currentConfig.deviceID);
-        // Serial.println(")");
+        #if defined(DEBUG)
+        Serial.print("ConfigManager: Normal Operation (ID: "); 
+        Serial.print(currentConfig.deviceID);
+        Serial.println(")");
+        #endif
         
         // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
-        pinMode(CONFIG_BUTTON_PIN, INPUT); 
+        pinMode(PIN_CONFIG, INPUT); 
         
         return true; // สำเร็จ (เข้าสู่ Normal Mode)
     }

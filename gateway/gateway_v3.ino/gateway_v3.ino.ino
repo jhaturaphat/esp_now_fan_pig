@@ -5,17 +5,18 @@
  */
 
 #include <esp_now.h>  //สำหรับ ESP32
+#include <esp_wifi.h>
 #include <WiFi.h>
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
 
-// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // กำหนด PIN
 #define BUZZER_PIN18  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN19 19        // Siren สำหรับแจ้งเตือนหลัก
 #define LED_STATUS_PIN2 5    // LED แสดงสถานะ
-
+#define RECEIVE_CHANNEL 6
 // จำนวน Sensor
 #define MAX_SENSORS 10
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
@@ -57,7 +58,9 @@ String system_status = "";
 HardwareSerial mySerial(2);
 
 void setup() {
+  #if defined(DEBUG)
   Serial.begin(115200);
+  #endif
   mySerial.begin(9600, SERIAL_8N1, 16, 17);  // TX=17, RX=16
   // กำหนด PIN Mode
   pinMode(BUZZER_PIN18, OUTPUT);
@@ -67,14 +70,19 @@ void setup() {
   // เริ่มต้น WiFi ในโหมด Station
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);  // ป้องกัน WiFi sleep สำหรับ ESP-NOW
-  // Serial.println("MAC Address: " + WiFi.macAddress());
-  
+  // Serial.println("MAC Address: " + WiFi.macAddress());  
+  // กำหนด Channel
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(RECEIVE_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
   // เริ่มต้น ESP-NOW
   if (esp_now_init() != ESP_OK) {
+    #if defined(DEBUG)
     Serial.println("Error initializing ESP-NOW");
+    #endif
     return;
   }
-
+  #if defined(DEBUG)
   Serial.println("\n✅ ESP32 Gateway Ready - 24x7 Mode");
   Serial.println("╔══════════════════════════════════════╗");
   Serial.println("║            GATEWAY INFO              ║");
@@ -99,15 +107,17 @@ void setup() {
   Serial.printf("   {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", 
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   Serial.println();
-  
+  #endif
   // ลงทะเบียน callback function (ESP32 Arduino Core 3.x)
   esp_now_register_recv_cb(onDataReceive);
   
   // เริ่มต้นสถานะ sensor
   initializeSensors();
   
+  #if defined(DEBUG)
   Serial.println("ESP32 Gateway Ready");
   Serial.println("Waiting for sensors...");
+  #endif
   
   // ทดสอบระบบเสียง
   testSounds();

@@ -28,7 +28,7 @@
 
 // MAC Address ของ Gateway ESP32 - *** ต้องใส่ MAC จริงของ Gateway *** 24:d7:eb:0e:f1:fc
 //uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง 40:91:51:AD:6D:08
-uint8_t gateway_mac[] = {0x40, 0x91, 0x51, 0xAD, 0x6D, 0x08};
+uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xE8, 0xC8};
 
 
 // กำหนด PIN - ใช้ RXD (GPIO3)

@@ -5,6 +5,8 @@
 #include <WiFiUdp.h>
 #include <HardwareSerial.h>
 
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+
 #define BUZZER_PIN 18  //Buzzer สำหรับขาดการสือสาร
 
 unsigned long previousMillis = 0;
@@ -28,7 +30,10 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 25200, 60000); // UTC+7 สำห�
 HardwareSerial mySerial(2);
 
 void setup() {
+  #if defined(DEBUG) 
   Serial.begin(115200);
+  #endif
+
   mySerial.begin(9600, SERIAL_8N1, 16, 17);  // TX=17, RX=16
   
   pinMode(BUZZER_PIN, OUTPUT);
@@ -37,27 +42,35 @@ void setup() {
   // เชื่อมต่อ Wi-Fi
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);  // ป้องกัน WiFi sleep
+  #if defined(DEBUG) 
   Serial.println("Connecting to WiFi...");
+  #endif
   
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(1000);
+    #if defined(DEBUG) 
     Serial.print(".");
+    #endif
     attempts++;
   }
   
   if (WiFi.status() == WL_CONNECTED) {
+    #if defined(DEBUG) 
     Serial.println();
     Serial.println("Connected to WiFi!");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    #endif
     String ip = String(WiFi.localIP());
     // ทดสอบส่งข้อความเมื่อเชื่อมต่อสำเร็จ
     // sendMessageToDiscord("Gateway เชื่อมต่อสำเร็จแล้ว! 🎉");
     sendMessageToDiscord("📶 เชื่อมต่อสำเร็จแล้ว! 🎉 \n IP:"+ip);  
   } else {
+    #if defined(DEBUG) 
     Serial.println();
     Serial.println("Failed to connect to WiFi");
+    #endif
   }
 
   // เริ่มต้น NTP Client
@@ -91,20 +104,26 @@ void loop() {
     if (buffer.endsWith("START\n")) {
       buffer = "";  // ล้าง buffer เริ่มใหม่
       receiving = true;
+      #if defined(DEBUG) 
       Serial.println("Started new message");
+      #endif
     }else if (receiving && buffer.endsWith("END\n")) { // ตรวจสอบ end marker
       buffer.replace("START\n", "");  // ลบ start marker
       buffer.replace("END\n", "");    // ลบ end marker
       buffer.trim();
       if (buffer.length() > 0) {
+        #if defined(DEBUG) 
         Serial.println("Full message received:");
         Serial.println("=== START ===");
         Serial.println(buffer);
         Serial.println("=== END ===");
+        #endif
         sendMessageToDiscord("🎉แจ้งเตือนพัดลม ครับ\n"+buffer);        
         // sendMessageToDiscord(buffer);
       } else {
+        #if defined(DEBUG) 
         Serial.println("Empty buffer after trim!");
+        #endif
       }
       buffer = "";
       receiving = false;
@@ -128,7 +147,9 @@ void loop() {
   
   // ตรวจสอบการเชื่อมต่อ WiFi
   if ((WiFi.status() != WL_CONNECTED)) {
+    #if defined(DEBUG) 
     Serial.println("WiFi disconnected, attempting to reconnect...");
+    #endif
     WiFi.disconnect();
     WiFi.reconnect();
     previousMillis = currentMillis;
@@ -153,9 +174,11 @@ void sendData(String msg) {
   mySerial.print((char)checksum);
   mySerial.println();
   mySerial.flush();
+  #if defined(DEBUG) 
   Serial.println("Sent: " + msg);  // Debug
   Serial.print((char)checksum);
   Serial.println(checksum);  // Debug
+  #endif
 }
 
 void systemStatus(){
@@ -178,7 +201,9 @@ void systemStatus(){
 
 void sendMessageToDiscord(String msg) {
   if (WiFi.status() != WL_CONNECTED) {
+    #if defined(DEBUG) 
     Serial.println("WiFi not connected - cannot send message");
+    #endif
     return;
   }
   
@@ -186,8 +211,9 @@ void sendMessageToDiscord(String msg) {
   client.setInsecure(); // ไม่ตรวจสอบ SSL certificate (ใช้เฉพาะการทดสอบ)
   
   HTTPClient http;
-  
+  #if defined(DEBUG) 
   Serial.println("Attempting to send message to Discord...");
+  #endif
   
   if (http.begin(client, webhookUrl)) {
     http.addHeader("Content-Type", "application/json");
@@ -205,7 +231,8 @@ void sendMessageToDiscord(String msg) {
     // ส่ง POST request
     int httpResponseCode = http.POST(jsonPayload);
     
-    if (httpResponseCode > 0) {
+    #if defined(DEBUG) 
+    if (httpResponseCode > 0) {      
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
       
@@ -220,10 +247,13 @@ void sendMessageToDiscord(String msg) {
       Serial.println(httpResponseCode);
       Serial.println("Error: " + http.errorToString(httpResponseCode));
     }
+    #endif
     
     http.end();
   } else {
+    #if defined(DEBUG) 
     Serial.println("Failed to begin HTTP connection");
+    #endif
   }
   
   delay(100); // หน่วงเวลาเล็กน้อย

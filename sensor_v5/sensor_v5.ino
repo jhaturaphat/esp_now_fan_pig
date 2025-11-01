@@ -22,18 +22,10 @@
   #include <ESP8266WiFi.h> 
   #include <espnow.h>   //สำหรับ ESP8266
 
-#define DEBUG 1
-// กำหนดค่าสำคัญ - *** เปลี่ยนในแต่ละ sensor ***
-#define SENSOR_ID 1  // เปลี่ยนเป็น 1,2,3,4,5,6,7 ในแต่ละตัว
+#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
-// MAC Address ของ Gateway ESP32 - *** ต้องใส่ MAC จริงของ Gateway *** 24:d7:eb:0e:f1:fc
-//uint8_t gateway_mac[] = {0x24, 0xD7, 0xEB, 0x0E, 0xF1, 0xFC}; // เปลี่ยนเป็น MAC จริง 40:91:51:AD:6D:08
-uint8_t gateway_mac[] = {0x40, 0x91, 0x51, 0xAD, 0x6D, 0x08};
-
-
-// กำหนด PIN - ใช้ RXD (GPIO3)
+#define CONFIG_BUTTON_PIN  0 // GPIO0: Input (LOW = Config Mode)
 #define REED_SWITCH_PIN 3   // GPIO3 (RXD) สำหรับ reed switch
-
 #define STATUS_LED_PIN 2    // GPIO2 สำหรับ LED สถานะ
 
 // โครงสร้างข้อมูลที่ส่งไป Gateway
@@ -65,18 +57,19 @@ ConfigManager cfgManager;
 DeviceConfig myConfig;
 
 void setup() {
-  // Serial.begin(115200);  
+  #if defined(DEBUG)
+  Serial.begin(115200);  
+  #endif
   // เรียกใช้เมธอด begin()
   // begin() จะตรวจสอบสวิตช์และค่าใน EEPROM
   // ถ้าจำเป็น มันจะรัน Web Server และไม่กลับมาจนกว่าจะรีสตาร์ท
   delay(5000); //รอผู้ใช้กดปุ่มเพื่อตั้งค่า
-  cfgManager.begin();  
+  cfgManager.begin(CONFIG_BUTTON_PIN);  
   // เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว
-  // Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
+  #if defined(DEBUG)
+  Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
+  #endif
   myConfig = cfgManager.getConfig();
-  
-  // Serial.print("ID = ");
-  // Serial.println(myConfig.deviceID);
 
   // *** สำคัญ: ห้ามใช้ Serial.begin() เพราะใช้ RXD เป็น GPIO ***
   
@@ -93,11 +86,16 @@ void setup() {
   
   // Serial.printf("Sensor ID: %d\n", SENSOR_ID);
   // Serial.println("MAC Address: " + WiFi.macAddress());
-  
+  // *** สำคัญ: ตั้งค่า Channel ให้เป็น Channel ที่กำหนดไว้ ***  
+  // กำหนด Channel
+  wifi_set_channel(myConfig.channel);
   // เริ่มต้น ESP-NOW
   if (esp_now_init() != 0) {
-    //Serial.println("Error initializing ESP-NOW");
+    #if defined(DEBUG)
+    Serial.println("Error initializing ESP-NOW");
+    #endif
     errorBlink();
+    delay(5000);
     ESP.restart();
   }
   
@@ -106,10 +104,24 @@ void setup() {
   
   // ลงทะเบียน callback สำหรับการส่งข้อมูล
   esp_now_register_send_cb(onDataSent);
+
+  #if defined(DEBUG)
+  Serial.print("ID = ");
+  Serial.println(myConfig.deviceID);
+  Serial.print("CHANNEL = ");
+  Serial.println(myConfig.channel);
+  Serial.print("MAC GW= ");
+  Serial.printf("{0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", 
+                myConfig.gatewayMAC[0], myConfig.gatewayMAC[1], myConfig.gatewayMAC[2], myConfig.gatewayMAC[3], myConfig.gatewayMAC[4], myConfig.gatewayMAC[5]);
+  Serial.println();
+  #endif
+
   
     // เพิ่ม Gateway เป็น Peer  
-  if (esp_now_add_peer(gateway_mac, ESP_NOW_ROLE_SLAVE, 1, NULL, 0) != 0) {
-    //Serial.println("Failed to add Gateway as peer");
+  if (esp_now_add_peer(myConfig.gatewayMAC, ESP_NOW_ROLE_SLAVE, myConfig.channel, NULL, 0) != 0) {
+    #if defined(DEBUG)
+    Serial.println("Failed to add Gateway as peer");
+    #endif
     errorBlink();
   }
   
@@ -174,23 +186,36 @@ void sendSensorData(bool is_heartbeat) {
   // เพิ่มการหน่วงเวลาแบบสุ่มก่อนส่งข้อมูล
   delay(random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX));
   // ส่งข้อมูล
-  esp_now_send(gateway_mac, (uint8_t *) &msg, sizeof(msg));
-  
-  // if (is_heartbeat) {
-  //   Serial.printf("Heartbeat sent - Switch: %s\n", 
-  //                msg.switch_status ? "CLOSED" : "OPEN");
-  // } else {
-  //   Serial.printf("Alert sent - Switch: %s\n", 
-  //                 msg.switch_status ? "CLOSED" : "OPEN");
-  // }
+  esp_now_send(myConfig.gatewayMAC, (uint8_t *) &msg, sizeof(msg));
+  #if defined(DEBUG)
+  if (is_heartbeat) {
+    Serial.printf("Heartbeat sent - Switch: %s\n", 
+                 msg.switch_status ? " ✅ OPEN" : "🚨 CLOSED");
+  } else {
+    Serial.printf("Alert sent - Switch: %s\n", 
+                  msg.switch_status ? " ✅ OPEN" : "🚨 CLOSED");
+  }
+  #endif
 }
 
 // Callback เมื่อส่งข้อมูลเสร็จ
 void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
+  #if defined(DEBUG)
+  char macStr[18]; // array สำหรับเก็บสตริง MAC address
+  
+  // แปลง MAC address จากรูปแบบ uint8_t* ให้เป็นสตริงที่อ่านได้
+  sprintf(macStr, "%02x:%02x:%02x:%02x:%02x:%02x",
+          mac_addr[0], mac_addr[1], mac_addr[2], 
+          mac_addr[3], mac_addr[4], mac_addr[5]);
+  #endif
   if (sendStatus == 0) {
-    //Serial.println("Data sent successfully");
+    #if defined(DEBUG)
+    Serial.printf("Data sent successfully to MAC: %s\n", macStr);
+    #endif
   } else {
-    //Serial.println("Error sending data");
+    #if defined(DEBUG)
+    Serial.println("Error sending data");
+    #endif
     errorBlink();
   }
 }
@@ -198,9 +223,9 @@ void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void blinkStatusLED() {
   for (int i = 0; i < 4; i++) {
     digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(100);
+    delay(200);
     digitalWrite(STATUS_LED_PIN, LOW);
-    delay(100);
+    delay(200);
   }
 }
 
