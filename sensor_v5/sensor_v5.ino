@@ -43,13 +43,13 @@ unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;
 // ค่าตั้งเวลา
 const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
-const unsigned long HEARTBEAT_INTERVAL = 10000; // ส่ง heartbeat ทุก 10 วินาที
+const unsigned long HEARTBEAT_INTERVAL = random(500, 10000); // ส่ง heartbeat ทุก 5-10 วินาที
 const unsigned long DEBOUNCE_DELAY = 200;        // รอ 200ms เพื่อยืนยันสถานะ
 const unsigned long CONFIRMATION_DELAY = 500;    // รอ 500ms ก่อนส่งข้อมูล
 
 // เพิ่มในส่วนกำหนดตัวแปรด้านบน
-#define RANDOM_DELAY_MIN 0    // หน่วงเวลาขั้นต่ำ (ms)
-#define RANDOM_DELAY_MAX 500  // หน่วงเวลาสูงสุด (ms)
+#define RANDOM_DELAY_MIN 100    // หน่วงเวลาขั้นต่ำ (10ms)
+#define RANDOM_DELAY_MAX 300  // หน่วงเวลาสูงสุด (30ms)
 
 // 1. สร้าง Object ของ ConfigManager
 ConfigManager cfgManager;
@@ -166,7 +166,8 @@ void loop() {
   }
   
   // ส่ง Heartbeat ทุก 10 วินาที
-  if (current_time - last_heartbeat > HEARTBEAT_INTERVAL) {
+  // if (current_time - last_heartbeat > HEARTBEAT_INTERVAL)
+  if (current_time - last_heartbeat > random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX)) {
     sendSensorData(true);
     last_heartbeat = current_time;
     // กระพริบ LED เมื่อส่งข้อมูล
@@ -179,12 +180,18 @@ void loop() {
 
 void sendSensorData(bool is_heartbeat) {
   sensor_message msg;
-  msg.sensor_id = myConfig.deviceID;
+  // จำลองเซ็นเซอร์ 1-10 ตัว
+  #if defined(DEBUG)
+  msg.sensor_id = random(1, 11);
+  #else
+  msg.sensor_id = myConfig.deviceID; 
+  #endif
+
   msg.switch_status = digitalRead(REED_SWITCH_PIN);
   msg.timestamp = millis();
   
   // เพิ่มการหน่วงเวลาแบบสุ่มก่อนส่งข้อมูล
-  delay(random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX));
+  // delay(random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX));
   // ส่งข้อมูล
   esp_now_send(myConfig.gatewayMAC, (uint8_t *) &msg, sizeof(msg));
   #if defined(DEBUG)
