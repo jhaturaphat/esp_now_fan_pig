@@ -7,11 +7,14 @@
 #define DEBUG  // เอาคอมเมนต์ออกเมิ่ออยู่ในโหมด DEBUG
 
 #define MAX_SENSORS 10
-#define RELAY1_PIN 16 
-#define LED_STATUS 17
-#define RELAY2_PIN 18
-#define CONFIG_PIN 19
-#define TEST_PIN 23
+
+#define RELAY1_PIN 16  //out put
+#define RELAY2_PIN 17  //out put
+#define LED_STATUS 18  //out put
+#define CONFIG_PIN 19  //input pulll up
+#define TEST_PIN 23 //input pulll up
+#define DISABLE_SIREN 25  //input pulll up
+
 
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
 #define TIMEOUT_SIREN 10000 // 10 วินาที timeout
