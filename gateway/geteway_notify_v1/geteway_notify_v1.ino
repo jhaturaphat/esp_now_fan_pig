@@ -1,14 +1,29 @@
+#include "ConfigManager.h"
 #include <WiFi.h>
 #include <ArduinoJson.h>
-#include <ESPAsyncWebServer.h>
+
+
+#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+
+#define RELAY1_PIN 16  //out put
+#define RELAY2_PIN 17  //out put
+#define LED_STATUS 18  //out put
+#define CONFIG_PIN 19  //input pulll up
+#define TEST_PIN 23 //input pulll up
+#define DISABLE_SIREN 25  //input pulll up
 
 const char* ssid = "kid_2.4GHz";
 const char* password = "xx3xx3xx";
 
-AsyncWebServer server(80);
+ConfigManager configManager;
 
 void setup() {
   Serial.begin(115200);
+
+  configManager.begin(CONFIG_PIN);
+  #if defined(DEBUG)
+  Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
+  #endif
   
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -17,38 +32,6 @@ void setup() {
   }
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
-
-  // รับ JSON ผ่าน POST
-  server.on("/json", HTTP_POST, [](AsyncWebServerRequest *request){
-    // ส่ง response ทันที
-    request->send(200, "application/json", "{\"status\":\"processing\"}");
-  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
-    
-    // แปลงข้อมูลเป็น String
-    String jsonString = String((char*)data).substring(0, len);
-    
-    Serial.println("Received JSON: " + jsonString);
-
-    // Parse JSON
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, jsonString);
-
-    if (!error) {
-      // อ่านค่าจาก JSON
-      if (doc.containsKey("name")) {
-        String name = doc["name"];
-        Serial.println("Name: " + name);
-      }
-      if (doc.containsKey("value")) {
-        int value = doc["value"];
-        Serial.println("Value: " + String(value));
-      }
-    } else {
-      Serial.println("JSON parse error");
-    }
-  });
-
-  server.begin();
 }
 
 void loop() {

@@ -170,85 +170,85 @@ private:
         html.replace("%MAC_VALUE%", String(macStr));
 
         request->send(200, "text/html", html);
-    });
+        });
 
-    // สำหรับ iOS Captive Portal
-    server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) { 
-        // request->send(200, "text/html", index_html, [](const String& var) { return String(); });
-        request->redirect("http://" + WiFi.softAPIP().toString());
-    });
+        // สำหรับ iOS Captive Portal
+        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) { 
+            // request->send(200, "text/html", index_html, [](const String& var) { return String(); });
+            request->redirect("http://" + WiFi.softAPIP().toString());
+        });
 
-    // รับข้อมูลจากฟอร์มและบันทึก
-    server.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request){
-        String msg = "Configuration Saved! Device will restart...";
-        bool valid = true;
-        
-        // รับ ID
-        if(request->hasParam(PARAM_ID, true)){
-            String idStr = request->getParam(PARAM_ID, true)->value();
-            uint16_t id = idStr.toInt();
-            if(id >= 1 && id <= MAX_ID) {
-                this->currentConfig.deviceID = (uint8_t)id;
+        // รับข้อมูลจากฟอร์มและบันทึก
+        server.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request){
+            String msg = "Configuration Saved! Device will restart...";
+            bool valid = true;
+            
+            // รับ ID
+            if(request->hasParam(PARAM_ID, true)){
+                String idStr = request->getParam(PARAM_ID, true)->value();
+                uint16_t id = idStr.toInt();
+                if(id >= 1 && id <= MAX_ID) {
+                    this->currentConfig.deviceID = (uint8_t)id;
+                } else {
+                    msg = "Invalid ID! Must be 1-"+MAX_ID; 
+                    valid = false;
+                }
+            } else { valid = false; }
+
+            // รับ CH
+            if(request->hasParam(PARAM_CH, true)){
+                String chStr = request->getParam(PARAM_CH, true)->value();
+                uint16_t ch = chStr.toInt();
+                if(ch >= 1 && ch <= MAX_CH) {
+                    this->currentConfig.channel = (uint8_t)ch;
+                } else {
+                    msg = "Invalid ID! Must be 1-"+MAX_CH; 
+                    valid = false;
+                }
+            } else { valid = false; }
+            
+            // รับ MAC
+            if(request->hasParam(PARAM_MAC, true) && valid){
+                String macStr = request->getParam(PARAM_MAC, true)->value();
+                if (sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+                            &this->currentConfig.gatewayMAC[0], &this->currentConfig.gatewayMAC[1], &this->currentConfig.gatewayMAC[2], 
+                            &this->currentConfig.gatewayMAC[3], &this->currentConfig.gatewayMAC[4], &this->currentConfig.gatewayMAC[5]) != 6) {
+                    msg = "Invalid MAC Address format!"; valid = false;
+                }
+            } else { valid = false; }
+
+            // บันทึกและตอบกลับ
+            if (valid) {
+                this->saveConfig();
+                request->send(200, "text/plain", "OK. " + msg);
+                // Serial.println("ConfigManager: Saving and Restarting...");
+                delay(1000); 
+                //ESP.restart();
             } else {
-                msg = "Invalid ID! Must be 1-"+MAX_ID; 
-                valid = false;
+                request->send(400, "text/plain", "ERROR. " + msg);
             }
-        } else { valid = false; }
-
-        // รับ CH
-        if(request->hasParam(PARAM_CH, true)){
-            String chStr = request->getParam(PARAM_CH, true)->value();
-            uint16_t ch = chStr.toInt();
-            if(ch >= 1 && ch <= MAX_CH) {
-                this->currentConfig.channel = (uint8_t)ch;
-            } else {
-                msg = "Invalid ID! Must be 1-"+MAX_CH; 
-                valid = false;
-            }
-        } else { valid = false; }
+        });
+        // หาก url ไม่ตรงกับ route
+        server.onNotFound([this](AsyncWebServerRequest *request) {
+            request->redirect("http://" + WiFi.softAPIP().toString());
+        });
+        // รัน server
+        server.begin();
         
-        // รับ MAC
-        if(request->hasParam(PARAM_MAC, true) && valid){
-            String macStr = request->getParam(PARAM_MAC, true)->value();
-            if (sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-                        &this->currentConfig.gatewayMAC[0], &this->currentConfig.gatewayMAC[1], &this->currentConfig.gatewayMAC[2], 
-                        &this->currentConfig.gatewayMAC[3], &this->currentConfig.gatewayMAC[4], &this->currentConfig.gatewayMAC[5]) != 6) {
-                msg = "Invalid MAC Address format!"; valid = false;
+        // Loop for blinking LED during config mode
+        while(true) {
+            yield();
+            unsigned long currentMillis = millis();
+            // ตรวจสอบและกระพริบ LED ทุก 300 มิลลิวินาที
+            if (currentMillis - previousMillis >= interval) {
+                previousMillis = currentMillis;
+                ledState = !ledState;
+                digitalWrite(LED_PIN, ledState);
             }
-        } else { valid = false; }
-
-        // บันทึกและตอบกลับ
-        if (valid) {
-            this->saveConfig();
-            request->send(200, "text/plain", "OK. " + msg);
-            // Serial.println("ConfigManager: Saving and Restarting...");
-            delay(1000); 
-            //ESP.restart();
-        } else {
-            request->send(400, "text/plain", "ERROR. " + msg);
+            // ประมวลผลคำขอ DNS และ mDNS
+            dnsServer.processNextRequest();
+            MDNS.update();
         }
-    });
-
-    server.onNotFound([this](AsyncWebServerRequest *request) {
-        request->redirect("http://" + WiFi.softAPIP().toString());
-    });
-
-    server.begin();
-    
-      // Loop for blinking LED during config mode
-      while(true) {
-        yield();
-        unsigned long currentMillis = millis();
-          // ตรวจสอบและกระพริบ LED ทุก 300 มิลลิวินาที
-          if (currentMillis - previousMillis >= interval) {
-              previousMillis = currentMillis;
-              ledState = !ledState;
-              digitalWrite(LED_PIN, ledState);
-          }
-        // ประมวลผลคำขอ DNS และ mDNS
-        dnsServer.processNextRequest();
-        MDNS.update();
-      }
     }
 
 public:

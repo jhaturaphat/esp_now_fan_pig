@@ -139,8 +139,8 @@ private:
             html.replace("%CH_VALUE%", String(currentConfig.channel));
         }
 
-        request->send(200, "text/html", html);
-    });
+            request->send(200, "text/html", html);
+        });
 
     
     // รับข้อมูลจากฟอร์มและบันทึก
