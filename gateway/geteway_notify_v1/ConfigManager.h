@@ -8,22 +8,23 @@
 
 
 
-struct ParamWiFi {
+struct ConfigWiFi {
   char* ssid;
   char* password;
 };
 
-struct ParamNtfy {
-  char* topic; 
-};
+// struct ParamNtfy {
+//   char* url; 
+// };
 
-struct ParamDiscord {
-  char* webhooks;
-};
+// struct ParamDiscord {
+//   char* url;
+// };
 
-struct ParamTelegram {
-  char* token;
-  char channel;
+struct ConfigNotify {  
+  char* url;
+  char* channel;
+  char* type;
 };
 
 class ConfigManager {
@@ -36,9 +37,9 @@ class ConfigManager {
   DNSServer dnsServer;
   const byte DNS_PORT = 53;
 
-  ParamWiFi paramWiFi;
-  ParamNtfy paramNtfy;
-  ParamTelegram paramTelegram;
+  ConfigWiFi configWiFi;
+  // ParamNtfy paramNtfy;
+  ConfigNotify configNotify;
 
   // ตัวแปรสำหรับจัดการการกระพริบ LED แบบ non-blocking
   unsigned long previousMillis = 0;
@@ -52,6 +53,85 @@ class ConfigManager {
     String chipIDStr = String(chipId32, HEX);
     chipIDStr.toUpperCase();
     return chipIDStr;
+  }
+
+  bool loadConfigWiFi(){
+    File file = LittleFS.open("/wifi_config.json", "r");
+    if (!file) {
+      #if defined(DEBUG)
+      Serial.println("Failed to open config file");
+      #endif
+      return false;
+    }
+
+    StaticJsonDocument<64> doc;
+    DeserializationError error = deserializeJson(doc, file);
+    file.close();
+
+    if (error) {
+      #if defined(DEBUG)
+      Serial.println("Failed to parse config file");
+      #endif
+      return false;
+    }
+
+    // จัดการหน่วยความจำให้เหมาะกับ char*
+    const char* ssid = doc["ssid"];
+    const char* password = doc["password"];
+
+    // ปล่อยหน่วยความจำเก่า (ถ้ามี)
+    if (configWiFi.ssid) free(configWiFi.ssid);
+    if (configWiFi.password) free(configWiFi.password);
+    
+    // ทำ strdup เพื่อ copy string ไปยัง heap
+    configWiFi.ssid = strdup(ssid);
+    configWiFi.password = strdup(password);
+    #if defined(DEBUG)
+    Serial.printf("Loaded SSID: %s\n", configWiFi.ssid);
+    Serial.printf("Loaded Password: %s\n", configWiFi.password);
+    #endif
+    return true;
+  }
+
+  bool loadConfigNotify(){
+    File file = LittleFS.open("/notify_config.json","r");
+    if(!file){
+      #if defined(DEBUG)
+      Serial.println("Failed to open config file");
+      #endif
+      return false;
+    }
+
+    StaticJsonDocument<256> doc;
+    DeserializationError error = deserializeJson(doc, file);
+    file.close();
+
+    if (error) {
+      #if defined(DEBUG)
+      Serial.println("Failed to parse config file");
+      #endif
+      return false;
+    }
+
+    // จัดการหน่วยความจำให้เหมาะกับ char*
+    const char* url = doc["url"];
+    const char* channel = doc["channel"];
+    const char* type = doc["type"];
+    // ปล่อยหน่วยความจำเก่า (ถ้ามี)
+    if (configNotify.url) free(configNotify.url);
+    if (configNotify.channel) free(configNotify.channel);
+    if (configNotify.type) free(configNotify.type);
+
+    // ทำ strdup เพื่อ copy string ไปยัง heap
+    configNotify.url = strdup(url);
+    configNotify.channel = strdup(channel);
+    configNotify.type = strdup(type);
+    #if defined(DEBUG)
+    Serial.printf("Loaded URL: %s\n", configNotify.url);
+    Serial.printf("Loaded CHANNEL: %s\n", configNotify.channel);
+    Serial.printf("Loaded TYPE: %s\n", configNotify.type);
+    #endif
+    return true;
   }
 
   // Start Web Server
@@ -96,41 +176,102 @@ class ConfigManager {
     });
 
   // รับ JSON ผ่าน POST
-  server.on("/json", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("/save_wifi", HTTP_POST, [](AsyncWebServerRequest *request){
     // ส่ง response ทันที
       request->send(200, "application/json", "{\"status\":\"processing\"}");
     }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
     
-    // แปลงข้อมูลเป็น String
+    
+    #if defined(DEBUG)
+     // แปลงข้อมูลเป็น String
     String jsonString = String((char*)data).substring(0, len);
-     #if defined(DEBUG)
     Serial.println("Received JSON: " + jsonString);
     #endif
 
     // Parse JSON
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, jsonString);
+    StaticJsonDocument<64> doc;
+    DeserializationError error = deserializeJson(doc, data);
 
-    if (!error) {
-      // อ่านค่าจาก JSON
-      if (doc.containsKey("name")) {
-        String name = doc["name"];
-         #if defined(DEBUG)
-        Serial.println("Name: " + name);
-        #endif
-      }
-      if (doc.containsKey("value")) {
-        int value = doc["value"];
-         #if defined(DEBUG)
-        Serial.println("Value: " + String(value));
-        #endif
-      }
-      } else {
-         #if defined(DEBUG)
-        Serial.println("JSON parse error");
-        #endif
-      }
-    });
+    if (error) {
+      Serial.println("JSON parse failed");
+      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+      return;
+    }
+
+    // เปิดไฟล์เพื่อเขียน
+    File file = LittleFS.open("wifi_config.json", "w");
+    if(!file){
+      #if defined(DEBUG)
+      Serial.println("Failed to open file for writing");
+      #endif
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open file\"}");
+      return;
+    }
+    // เขียน JSON ลงไฟล์
+    if (serializeJson(doc, file) == 0) {
+      #if defined(DEBUG)
+      Serial.println("Failed to write JSON to file");
+      #endif
+      file.close();
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
+      return;
+    }
+
+    file.close();
+    #if defined(DEBUG)
+    Serial.println("WiFi config saved successfully");
+    #endif
+    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"WiFi config saved\"}");
+
+  });
+
+  // รับ JSON ผ่าน POST
+  server.on("/save_notify", HTTP_POST,[](AsyncWebServerRequest *request){
+    request->send(200, "application/json", "{\"status\":\"processing\"}");
+    }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+    #if defined(DEBUG)
+     // แปลงข้อมูลเป็น String
+    String jsonString = String((char*)data).substring(0, len);
+    Serial.println("Received JSON: " + jsonString);
+    #endif
+    StaticJsonDocument<256> doc;
+    DeserializationError error = deserializeJson(doc, data);
+    if (error) {
+      #if defined(DEBUG)
+      Serial.println("JSON parse failed");
+      #endif
+      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+      return;
+    }
+
+    // เปิดไฟล์เพื่อเขียน
+    File file = LittleFS.open("/notify_config.json", "w");
+    if (!file) {
+      #if defined(DEBUG)
+      Serial.println("Failed to open file for writing");
+      #endif
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open file\"}");
+      return;
+    }
+
+    // เขียน JSON ลงไฟล์
+    if (serializeJson(doc, file) == 0) {
+      #if defined(DEBUG)
+      Serial.println("Failed to write JSON to file");
+      #endif
+      file.close();
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
+      return;
+    }
+
+    file.close();
+    #if defined(DEBUG)
+    Serial.println("WiFi config saved successfully");
+    #endif
+    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"WiFi config saved\"}");
+   
+
+  });
 
 // Start Server
     server.begin();
@@ -163,7 +304,10 @@ class ConfigManager {
       bool switchPressed = (digitalRead(BUNTTON_PUSH) == LOW);
 
       if(switchPressed){
+        loadConfigWiFi();
+        loadConfigNotify();
         enterConfigMode();
+        
       }
 
       // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
@@ -171,6 +315,15 @@ class ConfigManager {
       return true; // สำเร็จ (เข้าสู่ Normal Mode)
 
     }
+
+    ConfigWiFi getConfigWiFi() const {
+      return configWiFi;
+    }
+    
+    ConfigNotify getConfigNotify() const {
+      return configNotify;
+    }
+
 
 
 };

@@ -1,6 +1,13 @@
+let playload = {
+  url:"",
+  chanel:"",
+  type:"",
+  interval: 4
+};
+
 function saveWificfg() {
-  const ssid = document.getElementById("wifi_ssid").value.trim();
-  const password = document.getElementById("wifi_password").value.trim();
+  const ssid = (document.getElementById("wifi_ssid").value).trim();
+  const password = (document.getElementById("wifi_password").value).trim();
 
   fetch("/save_wifi", {
     method: "POST",
@@ -23,12 +30,35 @@ function saveWificfg() {
       alert("⛔เกิดข้อผิดพลาด");
     });
 }
+// End 
 
-function saveNotifycfg() {
+function saveNotifycfg() {  
+  playload.url = "";
+  playload.chanel = "";
+  playload.type = "";
   const radioButtons = document.querySelectorAll('input[name="notify"]');
-  radioButtons.forEach((radio) => {
-    if (this.checked) {
-      switch (this.id) {
+  radioButtons.forEach((radio) => {    
+    if (radio.checked) {
+      // 1 = ntfy, 2 = telegram, 3 = discord
+      switch (radio.id) {
+        case "ntfy":
+          playload.url = (document.getElementById("topic").value).trim();
+          playload.type = radio.value; 
+          playload.interval = 10;           
+          sendConfigNotify(playload);
+        break;
+        case "telegram":
+          playload.url = (document.getElementById("telegram_token").value).trim();
+          playload.chanel = (document.getElementById("telegram_channel").value).trim();
+          playload.type = radio.value; 
+          playload.interval = 6;           
+          sendConfigNotify(playload);
+        break;
+        case "discord":
+          playload.url = (document.getElementById("discord").value).trim();
+          playload.type = radio.value; 
+          playload.interval = 6;           
+          sendConfigNotify(playload);
       }
     }
   });

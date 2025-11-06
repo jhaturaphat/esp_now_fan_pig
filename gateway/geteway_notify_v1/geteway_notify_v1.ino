@@ -1,3 +1,5 @@
+// 1 = ntfy, 2 = telegram, 3 = discord
+
 #include "ConfigManager.h"
 #include <WiFi.h>
 #include <ArduinoJson.h>
@@ -16,6 +18,8 @@ const char* ssid = "kid_2.4GHz";
 const char* password = "xx3xx3xx";
 
 ConfigManager configManager;
+ConfigWiFi configWiFi;
+ConfigNotify configNotify;
 
 void setup() {
   Serial.begin(115200);
@@ -24,14 +28,23 @@ void setup() {
   #if defined(DEBUG)
   Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
   #endif
+
+  configWiFi = configManager.getConfigWiFi();
   
-  WiFi.begin(ssid, password);
+  
+  WiFi.begin(configWiFi.ssid, configWiFi.password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
+    #if defined(DEBUG)
     Serial.println("Connecting to WiFi...");
+    #endif
   }
+  #if defined(DEBUG)
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
+  #endif
+
+  configNotify = configManager.getConfigNotify();
 }
 
 void loop() {
