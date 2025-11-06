@@ -30,7 +30,15 @@ void setup() {
   #endif
 
   configWiFi = configManager.getConfigWiFi();
-  
+  #if defined(DEBUG)
+  // ใช้ Serial.print() เพื่อดูค่า
+  Serial.println("--- Wifi Values ---");
+  Serial.print("SSID: ");
+  Serial.println(configWiFi.ssid); // พิมพ์ char*
+  Serial.print("PASSWORD: ");
+  Serial.println(configWiFi.password); // พิมพ์ char*
+  Serial.println("---------------------------");
+  #endif
   
   WiFi.begin(configWiFi.ssid, configWiFi.password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -45,6 +53,22 @@ void setup() {
   #endif
 
   configNotify = configManager.getConfigNotify();
+  #if defined(DEBUG)
+  // ใช้ Serial.print() เพื่อดูค่า
+  Serial.println("--- ConfigNotify Values ---");
+  Serial.print("URL: ");
+  Serial.println(configNotify.url); // พิมพ์ char*
+  
+  Serial.print("Channel: ");
+  Serial.println(configNotify.channel); // พิมพ์ char*
+  
+  Serial.print("Type: ");
+  Serial.println(configNotify.type); // พิมพ์ char*
+  
+  Serial.print("Interval: ");
+  Serial.println(configNotify.interval); // พิมพ์ uint8_t
+  Serial.println("---------------------------");
+  #endif
 }
 
 void loop() {

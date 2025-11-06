@@ -6,25 +6,18 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
-
+#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 struct ConfigWiFi {
   char* ssid;
   char* password;
 };
 
-// struct ParamNtfy {
-//   char* url; 
-// };
-
-// struct ParamDiscord {
-//   char* url;
-// };
-
 struct ConfigNotify {  
   char* url;
   char* channel;
   char* type;
+  uint8_t interval = 4;
 };
 
 class ConfigManager {
@@ -117,19 +110,23 @@ class ConfigManager {
     const char* url = doc["url"];
     const char* channel = doc["channel"];
     const char* type = doc["type"];
+    const uint8_t interval = doc["interval"];
     // ปล่อยหน่วยความจำเก่า (ถ้ามี)
     if (configNotify.url) free(configNotify.url);
     if (configNotify.channel) free(configNotify.channel);
     if (configNotify.type) free(configNotify.type);
+    // if (configNotify.interval) free(configNotify.interval);
 
     // ทำ strdup เพื่อ copy string ไปยัง heap
     configNotify.url = strdup(url);
     configNotify.channel = strdup(channel);
     configNotify.type = strdup(type);
+    configNotify.interval = interval;
     #if defined(DEBUG)
     Serial.printf("Loaded URL: %s\n", configNotify.url);
     Serial.printf("Loaded CHANNEL: %s\n", configNotify.channel);
     Serial.printf("Loaded TYPE: %s\n", configNotify.type);
+    Serial.printf("Loaded INTERVAL: %d\n", configNotify.interval);
     #endif
     return true;
   }
@@ -137,12 +134,7 @@ class ConfigManager {
   // Start Web Server
   void enterConfigMode() {
     // Initialize LittleFS
-    if(!LittleFS.begin()){
-      #if defined(DEBUG)
-      Serial.println("An Error has occurred while mounting LittleFS");
-      #endif
-      return;
-    }
+   
     WiFi.setSleep(0);
     WiFi.mode(WIFI_AP);
     String apName = "SETUP_GW-"+ chipID();
@@ -199,7 +191,7 @@ class ConfigManager {
     }
 
     // เปิดไฟล์เพื่อเขียน
-    File file = LittleFS.open("wifi_config.json", "w");
+    File file = LittleFS.open("/wifi_config.json", "w");
     if(!file){
       #if defined(DEBUG)
       Serial.println("Failed to open file for writing");
@@ -217,11 +209,23 @@ class ConfigManager {
       return;
     }
 
-    file.close();
     #if defined(DEBUG)
     Serial.println("WiFi config saved successfully");
     #endif
-    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"WiFi config saved\"}");
+
+    if (LittleFS.exists("/wifi_config.json")) {
+      #if defined(DEBUG)
+      Serial.println("✅ wifi_config.json exists");
+      #endif
+      file.close();
+      request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"WiFi config saved\"}");
+    } else {
+      #if defined(DEBUG)
+      Serial.println("⚠️ wifi_config.json not found");
+      #endif
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
+      file.close();
+    }
 
   });
 
@@ -264,13 +268,19 @@ class ConfigManager {
       return;
     }
 
-    file.close();
-    #if defined(DEBUG)
-    Serial.println("WiFi config saved successfully");
-    #endif
-    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"WiFi config saved\"}");
-   
-
+    if (LittleFS.exists("/notify_config.json")) {
+      #if defined(DEBUG)
+      Serial.println("✅ notify_config.json exists");
+      #endif
+      file.close();
+      request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"notify_config saved\"}");
+    } else {
+      #if defined(DEBUG)
+      Serial.println("⚠️ notify_config.json not found");
+      #endif
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
+      file.close();
+    }
   });
 
 // Start Server
@@ -297,18 +307,26 @@ class ConfigManager {
     ConfigManager() : server(80) {}
 
     bool begin(int BUNTTON_PUSH){
+      if(!LittleFS.begin()){
+        #if defined(DEBUG)
+        Serial.println("An Error has occurred while mounting LittleFS");
+        #endif
+        return false;
+      }
       pinMode(BUNTTON_PUSH, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot        
       pinMode(LED_STATUS, OUTPUT);
       digitalWrite(LED_STATUS, LOW);
 
       bool switchPressed = (digitalRead(BUNTTON_PUSH) == LOW);
 
-      if(switchPressed){
-        loadConfigWiFi();
-        loadConfigNotify();
-        enterConfigMode();
-        
+      if(switchPressed){        
+        enterConfigMode();        
       }
+      #if defined(DEBUG)
+      Serial.println("✨✨✨ Load config JSON ✨✨✨");
+      #endif
+      loadConfigWiFi();
+      loadConfigNotify();
 
       // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
       pinMode(BUNTTON_PUSH, INPUT); // GPIO0 must be HIGH for normal boot    

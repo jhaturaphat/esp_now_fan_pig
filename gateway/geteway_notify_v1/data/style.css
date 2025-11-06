@@ -38,13 +38,15 @@ body {
   margin-bottom: 5px;
   font-weight: 700;
 }
+input[type="text"]{
+  font-size: 16px;
+}
 .form-group input[type="number"],
 .form-group input[type="text"] {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 16px;
 }
 .form-group button {
   width: 100%;
