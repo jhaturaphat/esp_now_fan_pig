@@ -16,7 +16,7 @@ struct ConfigWiFi {
 struct ConfigNotify {  
   char* url;
   char* channel;
-  char* type;
+  uint8_t type;
   uint8_t interval = 4;
 };
 
@@ -86,8 +86,8 @@ class ConfigManager {
     return true;
   }
 
-  bool loadConfigNotify(){
-    File file = LittleFS.open("/notify_config.json","r");
+  bool loadConfigNotify(){    
+    File file = LittleFS.open("/notify_config.json", "r");
     if(!file){
       #if defined(DEBUG)
       Serial.println("Failed to open config file");
@@ -109,23 +109,32 @@ class ConfigManager {
     // จัดการหน่วยความจำให้เหมาะกับ char*
     const char* url = doc["url"];
     const char* channel = doc["channel"];
-    const char* type = doc["type"];
+    const uint8_t type = doc["type"];
     const uint8_t interval = doc["interval"];
     // ปล่อยหน่วยความจำเก่า (ถ้ามี)
-    if (configNotify.url) free(configNotify.url);
-    if (configNotify.channel) free(configNotify.channel);
-    if (configNotify.type) free(configNotify.type);
-    // if (configNotify.interval) free(configNotify.interval);
+    // if (configNotify.url) free(configNotify.url);
+    // if (configNotify.channel) free(configNotify.channel);
+    // if (configNotify.type) free(configNotify.type);
+  // ควรเปลี่ยนเป็น ปล่อยหน่วยความจำเก่า (ถ้ามี)
+    if (configNotify.url != nullptr) {
+      free(configNotify.url);
+      configNotify.url = nullptr;
+    }
+    if (configNotify.url != nullptr) {
+      free(configNotify.channel);
+      configNotify.channel = nullptr;
+    }
 
     // ทำ strdup เพื่อ copy string ไปยัง heap
     configNotify.url = strdup(url);
     configNotify.channel = strdup(channel);
-    configNotify.type = strdup(type);
+    configNotify.type = type;
     configNotify.interval = interval;
+
     #if defined(DEBUG)
     Serial.printf("Loaded URL: %s\n", configNotify.url);
     Serial.printf("Loaded CHANNEL: %s\n", configNotify.channel);
-    Serial.printf("Loaded TYPE: %s\n", configNotify.type);
+    Serial.printf("Loaded TYPE: %d\n", configNotify.type);
     Serial.printf("Loaded INTERVAL: %d\n", configNotify.interval);
     #endif
     return true;
@@ -137,7 +146,7 @@ class ConfigManager {
    
     WiFi.setSleep(0);
     WiFi.mode(WIFI_AP);
-    String apName = "SETUP_GW-"+ chipID();
+    String apName = "🛜SETUP_GW-"+ chipID();
     WiFi.softAP(apName.c_str(),"", 1, 0, 4); // ช่อง 1, จำกัด 4 อุปกรณ์
     delay(50); //หน่วงเวลา 100 ms เพื่อให้ AP เริ่มทำงาน
 
@@ -223,8 +232,8 @@ class ConfigManager {
       #if defined(DEBUG)
       Serial.println("⚠️ wifi_config.json not found");
       #endif
-      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
       file.close();
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");      
     }
 
   });
@@ -278,8 +287,9 @@ class ConfigManager {
       #if defined(DEBUG)
       Serial.println("⚠️ notify_config.json not found");
       #endif
-      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
       file.close();
+      request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
+      return;
     }
   });
 
@@ -317,14 +327,12 @@ class ConfigManager {
       pinMode(LED_STATUS, OUTPUT);
       digitalWrite(LED_STATUS, LOW);
 
-      bool switchPressed = (digitalRead(BUNTTON_PUSH) == LOW);
-
-      if(switchPressed){        
+      if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }
       #if defined(DEBUG)
       Serial.println("✨✨✨ Load config JSON ✨✨✨");
-      #endif
+      #endif      
       loadConfigWiFi();
       loadConfigNotify();
 
