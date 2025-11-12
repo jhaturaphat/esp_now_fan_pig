@@ -8,6 +8,7 @@
 #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 #define KID_PIN 34 //สำหรับป้องกันโปรแกรม
+
 #define RELAY1_PIN 16  //out put
 #define RELAY2_PIN 17  //out put
 #define LED_STATUS 18  //out put
@@ -26,6 +27,7 @@ void setup() {
   Serial.begin(115200);
    
   pinMode(KID_PIN, INPUT_PULLUP);
+
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
@@ -80,7 +82,7 @@ void setup() {
   
   if(digitalRead(KID_PIN) != LOW){  
     #if defined(DEBUG)  
-    Serial.print("ป้องกัน Code Protection");    
+    Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
     #endif
     return;
   }

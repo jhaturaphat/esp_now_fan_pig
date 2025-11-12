@@ -10,6 +10,8 @@
 
 #define SECURITY 34 //สำหรับใช้ป้องกันการ COPY
 
+#define KID_PIN 34 //สำหรับป้องกันโปรแกรม
+
 #define RELAY1_PIN 16  //out put
 #define RELAY2_PIN 17  //out put
 #define LED_STATUS 18  //out put
@@ -121,6 +123,7 @@ void CheckHashAlarm(){
   }
 }
 
+#if defined(DEBUG)
 void printDebugSensorStatus(){
   yield();
   if (millis() >= time_now + period){
@@ -145,6 +148,7 @@ void printDebugSensorStatus(){
     }
   }
 }
+#endif
 
 void sendSensorsData(){
   StaticJsonDocument<1024> doc;
@@ -166,8 +170,10 @@ void setup() {
   #if defined(DEBUG)
   Serial.begin(115200);
   #endif
+  // Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
+  pinMode(KID_PIN, INPUT_PULLUP);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
@@ -229,6 +235,13 @@ void setup() {
   #endif
   // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต่ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
   initializeSensorStorage();
+
+  if(digitalRead(KID_PIN) != LOW){  
+    #if defined(DEBUG)  
+    Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
+    #endif
+    return;
+  }
 
 }
 

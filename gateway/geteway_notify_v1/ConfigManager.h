@@ -154,6 +154,30 @@ class ConfigManager {
     return true;
 }
 
+    // ฟังก์ชันสำหรับอ่านไฟล์และพิมพ์เนื้อหาออกทาง Serial
+#if defined(DEBUG)
+void readFile(fs::FS &fs, const char * path) {
+  Serial.printf("Reading file: %s\r\n", path);
+
+  File file = fs.open(path, "r"); // เปิดไฟล์ในโหมดอ่าน ("r")
+  if (!file || file.isDirectory()) {
+    Serial.println("- Failed to open file for reading");
+    return;
+  }
+
+  Serial.println("- Read from file:");
+  // อ่านข้อมูลทีละไบต์จนกว่าจะหมดไฟล์และพิมพ์ออกทาง Serial
+  while (file.available()) {
+    Serial.write(file.read()); 
+  }
+  
+  // ขึ้นบรรทัดใหม่หลังอ่านจบ
+  Serial.println(); 
+
+  // ปิดไฟล์หลังจากอ่านเสร็จ
+  file.close();
+}
+#endif
   // Start Web Server
   void enterConfigMode() {
     // Initialize LittleFS
@@ -252,6 +276,8 @@ class ConfigManager {
 
   });
 
+
+
   // รับ JSON ผ่าน POST
   server.on("/save_notify", HTTP_POST,[](AsyncWebServerRequest *request){
     request->send(200, "application/json", "{\"status\":\"processing\"}");
@@ -307,6 +333,8 @@ class ConfigManager {
     }
   });
 
+
+
 // Start Server
     server.begin();
 
@@ -331,17 +359,19 @@ class ConfigManager {
     ConfigManager() : server(80) {}
 
     bool begin(int BUNTTON_PUSH){
+      delay(10);
       if(!LittleFS.begin()){
         #if defined(DEBUG)
         Serial.println("An Error has occurred while mounting LittleFS");
         #endif
         return false;
       }
-      delay(100);
-      pinMode(BUNTTON_PUSH, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot        
+      
+      pinMode(BUNTTON_PUSH, INPUT_PULLUP);        
+      delay(10);
       pinMode(LED_STATUS, OUTPUT);
       digitalWrite(LED_STATUS, LOW);
-      delay(100);
+      delay(10);
       if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }
@@ -351,8 +381,8 @@ class ConfigManager {
       loadConfigWiFi();
       loadConfigNotify();
 
-      // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
-      pinMode(BUNTTON_PUSH, INPUT); // GPIO0 must be HIGH for normal boot    
+      readFile(LittleFS, "/notify_config.json");
+      
       return true; // สำเร็จ (เข้าสู่ Normal Mode)
 
     }
