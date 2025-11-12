@@ -106,21 +106,34 @@ class ConfigManager {
       return false;
     }
 
-    // จัดการหน่วยความจำให้เหมาะกับ char*
+    // ✅ ตรวจสอบว่ามี key ที่จำเป็นหรือไม่
+    if (!doc.containsKey("url") || !doc.containsKey("channel")) {
+      #if defined(DEBUG)
+      Serial.println("Missing required fields in config");
+      #endif
+      return false;
+    }
+
     const char* url = doc["url"];
     const char* channel = doc["channel"];
-    const uint8_t type = doc["type"];
-    const uint8_t interval = doc["interval"];
-    // ปล่อยหน่วยความจำเก่า (ถ้ามี)
-    // if (configNotify.url) free(configNotify.url);
-    // if (configNotify.channel) free(configNotify.channel);
-    // if (configNotify.type) free(configNotify.type);
-  // ควรเปลี่ยนเป็น ปล่อยหน่วยความจำเก่า (ถ้ามี)
+    
+    // ✅ ตรวจสอบว่าไม่เป็น NULL
+    if (url == nullptr || channel == nullptr) {
+      #if defined(DEBUG)
+      Serial.println("URL or Channel is null");
+      #endif
+      return false;
+    }
+
+    const uint8_t type = doc["type"] | 0; // ใช้ default value 0 ถ้าไม่มี
+    const uint8_t interval = doc["interval"] | 0;
+
+    // ✅ ปล่อยหน่วยความจำเก่า (แก้ไขการตรวจสอบ)
     if (configNotify.url != nullptr) {
       free(configNotify.url);
       configNotify.url = nullptr;
     }
-    if (configNotify.url != nullptr) {
+    if (configNotify.channel != nullptr) { 
       free(configNotify.channel);
       configNotify.channel = nullptr;
     }
@@ -137,8 +150,9 @@ class ConfigManager {
     Serial.printf("Loaded TYPE: %d\n", configNotify.type);
     Serial.printf("Loaded INTERVAL: %d\n", configNotify.interval);
     #endif
+    
     return true;
-  }
+}
 
   // Start Web Server
   void enterConfigMode() {
@@ -323,10 +337,11 @@ class ConfigManager {
         #endif
         return false;
       }
+      delay(100);
       pinMode(BUNTTON_PUSH, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot        
       pinMode(LED_STATUS, OUTPUT);
       digitalWrite(LED_STATUS, LOW);
-
+      delay(100);
       if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }

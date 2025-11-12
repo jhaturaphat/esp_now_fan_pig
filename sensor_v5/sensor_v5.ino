@@ -22,7 +22,7 @@
   #include <ESP8266WiFi.h> 
   #include <espnow.h>   //สำหรับ ESP8266
 
-#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 #define CONFIG_BUTTON_PIN  0 // GPIO0: Input (LOW = Config Mode)
 #define REED_SWITCH_PIN 3   // GPIO3 (RXD) สำหรับ reed switch

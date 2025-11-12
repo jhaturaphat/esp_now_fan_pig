@@ -51,7 +51,7 @@ void setup() {
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
   #endif
-
+  
   configNotify = configManager.getConfigNotify();
   #if defined(DEBUG)
   // ใช้ Serial.print() เพื่อดูค่า

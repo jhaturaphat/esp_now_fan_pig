@@ -8,6 +8,8 @@
 
 #define MAX_SENSORS 10
 
+#define SECURITY 34 //สำหรับใช้ป้องกันการ COPY
+
 #define RELAY1_PIN 16  //out put
 #define RELAY2_PIN 17  //out put
 #define LED_STATUS 18  //out put
@@ -15,6 +17,8 @@
 #define TEST_PIN 23 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
+#define RXD2 32
+#define TXD2 33
 
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
 #define TIMEOUT_SIREN 10000 // 10 วินาที timeout
@@ -162,7 +166,7 @@ void setup() {
   #if defined(DEBUG)
   Serial.begin(115200);
   #endif
-  Serial2.begin(9600);
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
