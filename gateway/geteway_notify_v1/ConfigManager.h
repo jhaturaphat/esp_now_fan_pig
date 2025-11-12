@@ -261,7 +261,7 @@ class ConfigManager {
     String jsonString = String((char*)data).substring(0, len);
     Serial.println("Received JSON: " + jsonString);
     #endif
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<1024> doc;
     DeserializationError error = deserializeJson(doc, data);
     if (error) {
       #if defined(DEBUG)

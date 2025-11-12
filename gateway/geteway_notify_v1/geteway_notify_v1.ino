@@ -7,6 +7,7 @@
 
 #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
+#define KID_PIN 34 //สำหรับป้องกันโปรแกรม
 #define RELAY1_PIN 16  //out put
 #define RELAY2_PIN 17  //out put
 #define LED_STATUS 18  //out put
@@ -23,12 +24,19 @@ ConfigNotify configNotify;
 
 void setup() {
   Serial.begin(115200);
+   
+  pinMode(KID_PIN, INPUT_PULLUP);
+  pinMode(RELAY1_PIN, OUTPUT);
+  pinMode(RELAY2_PIN, OUTPUT);
+  pinMode(LED_STATUS, OUTPUT);
+  pinMode(TEST_PIN, INPUT);
+  pinMode(DISABLE_SIREN, INPUT);
 
   configManager.begin(CONFIG_PIN);
   #if defined(DEBUG)
   Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
   #endif
-
+  
   configWiFi = configManager.getConfigWiFi();
   #if defined(DEBUG)
   // ใช้ Serial.print() เพื่อดูค่า
@@ -69,6 +77,14 @@ void setup() {
   Serial.println(configNotify.interval); // พิมพ์ uint8_t
   Serial.println("---------------------------");
   #endif
+  
+  if(digitalRead(KID_PIN) != LOW){  
+    #if defined(DEBUG)  
+    Serial.print("ป้องกัน Code Protection");    
+    #endif
+    return;
+  }
+
 }
 
 void loop() {
