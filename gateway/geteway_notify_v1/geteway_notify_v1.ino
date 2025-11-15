@@ -16,8 +16,8 @@
 #define TEST_PIN 23 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
-const char* ssid = "kid_2.4GHz";
-const char* password = "xx3xx3xx";
+// const char* ssid = "kid_2.4GHz";
+// const char* password = "xx3xx3xx";
 
 ConfigManager configManager;
 ConfigWiFi configWiFi;
@@ -34,7 +34,13 @@ void setup() {
   pinMode(TEST_PIN, INPUT);
   pinMode(DISABLE_SIREN, INPUT);
 
-  configManager.begin(CONFIG_PIN);
+  if(!configManager.begin(CONFIG_PIN)){
+    #if defined(DEBUG)
+    // ❌ ถ้าโหลดไม่สำเร็จ
+    Serial.println("Failed to load notify config!");
+    #endif
+    return;
+  }
   #if defined(DEBUG)
   Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
   #endif
@@ -62,25 +68,18 @@ void setup() {
   Serial.println(WiFi.localIP());
   #endif
   
-  configNotify = configManager.getConfigNotify();
-  #if defined(DEBUG)
-  // ใช้ Serial.print() เพื่อดูค่า
-  Serial.println("--- ConfigNotify Values ---");
-  Serial.print("URL: ");
-  Serial.println(configNotify.url); // พิมพ์ char*
-  
-  Serial.print("Channel: ");
-  Serial.println(configNotify.channel); // พิมพ์ char*
-  
-  Serial.print("Type: ");
-  Serial.println(configNotify.type); // พิมพ์ char*
-  
-  Serial.print("Interval: ");
-  Serial.println(configNotify.interval); // พิมพ์ uint8_t
-  Serial.println("---------------------------");
+  configNotify = configManager.getConfigNotify();    
+  #if defined(DEBUG)      
+  Serial.println("---------------------------");     
+    Serial.printf("URL: %s\n", (configNotify.url != nullptr) ? configNotify.url : "(NULL)");    
+    Serial.printf("Channel: %s\n", (configNotify.channel != nullptr) ? configNotify.channel : "(NULL)");
+    Serial.printf("Type: %d\n", configNotify.type);
+    Serial.printf("Interval: %d\n", configNotify.interval);
+    Serial.println("---------------------------");     
   #endif
+
   
-  if(digitalRead(KID_PIN) != LOW){  
+  if(digitalRead(KID_PIN) == LOW){  
     #if defined(DEBUG)  
     Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
     #endif

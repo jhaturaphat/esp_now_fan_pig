@@ -77,9 +77,17 @@
       </div>
     </div>
 
-    <button class="floating-power-btn">⏻</button>
+    <button class="floating-power-btn" onclick="ReloadWithCountdown()">⏻</button>
     
     <div style="text-align: center;">Copyright By Mr.Jaturapat Siriboon</div>
+
+    <div id="countdownModal" class="modal">
+      <div class="modal-content">
+          <h2>⚙️ กำลังโหลดระบบใหม่</h2>
+          <p>โปรดรอสักครู่ ระบบกำลังจะรีบูต/รีโหลด...</p>
+          <div class="countdown-display" id="countdownTimer">3</div>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>

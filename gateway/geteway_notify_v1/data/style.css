@@ -110,6 +110,39 @@ input[type="radio"]:checked + label {
 .floating-power-btn:active {
   transform: scale(0.95);
 }
+
+/* --- Modal Styles (สำหรับ Popup สวยๆ) --- */
+.modal {
+  display: none; /* ซ่อนไว้ก่อน */
+  position: fixed; /* ให้อยู่ด้านบนสุดของหน้าจอ */
+  z-index: 1000; /* ให้อยู่เหนือองค์ประกอบอื่นๆ */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6); /* ฉากหลังทึบ */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* จัดกึ่งกลางหน้าจอ */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 300px; /* จำกัดขนาดให้ดูดี */
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+
+.countdown-display {
+  font-size: 3em; /* ตัวเลขนับถอยหลังใหญ่ๆ */
+  font-weight: bold;
+  color: #d9534f; /* สีแดงโดดเด่น */
+  margin-top: 10px;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 10px;

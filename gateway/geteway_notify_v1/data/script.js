@@ -1,7 +1,7 @@
 let playload = {
   url:"",
-  chanel:"",
-  type:"",
+  channel:"",
+  type: 1,
   interval: 4
 };
 
@@ -34,8 +34,7 @@ function saveWificfg() {
 
 function saveNotifycfg() {  
   playload.url = "";
-  playload.chanel = "";
-  playload.type = "";
+  playload.channel = "";
   const radioButtons = document.querySelectorAll('input[name="notify"]');
   radioButtons.forEach((radio) => {    
     if (radio.checked) {
@@ -43,21 +42,21 @@ function saveNotifycfg() {
       switch (radio.id) {
         case "ntfy":
           playload.url = (document.getElementById("topic").value).trim();
-          playload.type = radio.value; 
-          playload.interval = 10;           
+          playload.type = parseInt(radio.value); 
+          playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
         break;
         case "telegram":
           playload.url = (document.getElementById("telegram_token").value).trim();
-          playload.chanel = (document.getElementById("telegram_channel").value).trim();
-          playload.type = radio.value; 
-          playload.interval = 6;           
+          playload.channel = (document.getElementById("telegram_channel").value).trim();
+          playload.type = parseInt(radio.value); 
+          playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
         break;
         case "discord":
           playload.url = (document.getElementById("discord").value).trim();
-          playload.type = radio.value; 
-          playload.interval = 6;           
+          playload.type = parseInt(radio.value); 
+          playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
       }
     }
@@ -120,3 +119,40 @@ radioButtons.forEach((radio) => {
     }
   });
 });
+
+
+// ฟังก์ชันสำหรับโหลดหน้าเว็บใหม่
+function Reload() {
+  fetch("/reset");
+  // หรือทำการเรียก API เพื่อให้อุปกรณ์รีบูต/รีโหลด
+}
+
+/**
+* แสดง Modal นับถอยหลังก่อนเรียก Reload()
+*/
+function ReloadWithCountdown() {
+  let count = 3;
+  const modal = document.getElementById('countdownModal');
+  const timerDisplay = document.getElementById('countdownTimer');
+
+  // 1. แสดง Modal
+  modal.style.display = 'block';
+  timerDisplay.textContent = count;
+
+  // ฟังก์ชันย่อยสำหรับนับถอยหลัง
+  function countdown() {
+      if (count > 0) {
+          timerDisplay.textContent = count; // อัปเดตตัวเลขใน Modal
+          count--;
+          // หน่วงเวลา 1 วินาทีแล้วเรียกตัวเองซ้ำ
+          setTimeout(countdown, 1000); // 1000ms = 1 วินาที
+      } else {
+          // เมื่อนับครบแล้ว
+          modal.style.display = 'none'; // ซ่อน Modal
+          Reload(); // เรียกฟังก์ชันโหลดหน้าเว็บ/รีบูต
+      }
+  }
+
+  // เริ่มการนับถอยหลัง
+  countdown();
+}

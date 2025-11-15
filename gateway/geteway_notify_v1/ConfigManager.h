@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include <WiFi.h>
 #include <FS.h>
 #include <LittleFS.h>
@@ -9,15 +10,15 @@
 #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 struct ConfigWiFi {
-  char* ssid;
-  char* password;
+  char* ssid = nullptr;
+  char* password = nullptr;
 };
 
 struct ConfigNotify {  
-  char* url;
-  char* channel;
-  uint8_t type;
-  uint8_t interval = 4;
+  char* url = nullptr;
+  char* channel = nullptr;
+  uint8_t type = 3;
+  uint8_t interval = 6;
 };
 
 class ConfigManager {
@@ -30,9 +31,9 @@ class ConfigManager {
   DNSServer dnsServer;
   const byte DNS_PORT = 53;
 
-  ConfigWiFi configWiFi;
+  mutable ConfigWiFi configWiFi;  //mutable
   // ParamNtfy paramNtfy;
-  ConfigNotify configNotify;
+  mutable ConfigNotify configNotify;
 
   // ตัวแปรสำหรับจัดการการกระพริบ LED แบบ non-blocking
   unsigned long previousMillis = 0;
@@ -48,7 +49,7 @@ class ConfigManager {
     return chipIDStr;
   }
 
-  bool loadConfigWiFi(){
+  bool loadConfigWiFi() const{
     File file = LittleFS.open("/wifi_config.json", "r");
     if (!file) {
       #if defined(DEBUG)
@@ -86,7 +87,7 @@ class ConfigManager {
     return true;
   }
 
-  bool loadConfigNotify(){    
+bool loadConfigNotify() const{    
     File file = LittleFS.open("/notify_config.json", "r");
     if(!file){
       #if defined(DEBUG)
@@ -95,7 +96,7 @@ class ConfigManager {
       return false;
     }
 
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<512> doc;
     DeserializationError error = deserializeJson(doc, file);
     file.close();
 
@@ -109,26 +110,34 @@ class ConfigManager {
     // ✅ ตรวจสอบว่ามี key ที่จำเป็นหรือไม่
     if (!doc.containsKey("url") || !doc.containsKey("channel")) {
       #if defined(DEBUG)
-      Serial.println("Missing required fields in config");
+      Serial.println("Missing required fields url and channel in config");
       #endif
       return false;
     }
 
-    const char* url = doc["url"];
-    const char* channel = doc["channel"];
-    
-    // ✅ ตรวจสอบว่าไม่เป็น NULL
-    if (url == nullptr || channel == nullptr) {
+    const char* _url = doc["url"];
+    const char* _channel = doc["channel"];
+    const uint8_t _type = doc["type"] | 0;
+    const uint8_t _interval = doc["interval"] | 0;
+
+    //✅ ตรวจสอบว่าไม่เป็น NULL และไม่ใช่ string ว่าง
+    if (_url == nullptr || _channel == nullptr) {
       #if defined(DEBUG)
-      Serial.println("URL or Channel is null");
+      Serial.println("URL or Channel is null or empty");
       #endif
       return false;
     }
 
-    const uint8_t type = doc["type"] | 0; // ใช้ default value 0 ถ้าไม่มี
-    const uint8_t interval = doc["interval"] | 0;
+    if((strlen(_url) == 0 || strlen(_channel) == 0) && _type == 2){
+      #if defined(DEBUG)
+      Serial.println("Telegram Channel is null or empty");
+      #endif
+      return false;
+    }
 
-    // ✅ ปล่อยหน่วยความจำเก่า (แก้ไขการตรวจสอบ)
+    
+
+    // ✅ ปล่อยหน่วยความจำเก่า
     if (configNotify.url != nullptr) {
       free(configNotify.url);
       configNotify.url = nullptr;
@@ -139,10 +148,24 @@ class ConfigManager {
     }
 
     // ทำ strdup เพื่อ copy string ไปยัง heap
-    configNotify.url = strdup(url);
-    configNotify.channel = strdup(channel);
-    configNotify.type = type;
-    configNotify.interval = interval;
+    configNotify.url = strdup(_url);
+    configNotify.channel = strdup(_channel);
+     #if defined(DEBUG)
+    Serial.println("========copy string ไปยัง heap=======");
+    Serial.printf("%s\n", configNotify.url);
+    Serial.println("========================");
+    #endif
+    
+    // ✅ ตรวจสอบว่า strdup สำเร็จหรือไม่ 1 = ntfy, 2 = telegram, 3 = discord
+    if ((configNotify.url == nullptr || configNotify.channel == nullptr) && configNotify.type == 2) {
+      #if defined(DEBUG)
+      Serial.println("Failed to allocate memory for config");
+      #endif
+      return false;
+    }
+    
+    configNotify.type = _type;
+    configNotify.interval = _interval;
 
     #if defined(DEBUG)
     Serial.printf("Loaded URL: %s\n", configNotify.url);
@@ -237,6 +260,10 @@ void readFile(fs::FS &fs, const char * path) {
       return;
     }
 
+    if (LittleFS.exists("/wifi_config.json")){
+      //  ลบไฟล์เก่า
+      LittleFS.remove("/wifi_config.json");
+    }    
     // เปิดไฟล์เพื่อเขียน
     File file = LittleFS.open("/wifi_config.json", "w");
     if(!file){
@@ -297,6 +324,11 @@ void readFile(fs::FS &fs, const char * path) {
       return;
     }
 
+    if (LittleFS.exists("/notify_config.json")){
+      //  ลบไฟล์เก่า
+      LittleFS.remove("/notify_config.json");  
+    }
+     
     // เปิดไฟล์เพื่อเขียน
     File file = LittleFS.open("/notify_config.json", "w");
     if (!file) {
@@ -333,9 +365,12 @@ void readFile(fs::FS &fs, const char * path) {
     }
   });
 
+  server.on("/reset", HTTP_GET,[](AsyncWebServerRequest *request){
+    ESP.restart();
+  });
 
 
-// Start Server
+  // Start Server
     server.begin();
 
     while(true) {
@@ -357,7 +392,7 @@ void readFile(fs::FS &fs, const char * path) {
   public:
     // เรียก Contructor
     ConfigManager() : server(80) {}
-
+    
     bool begin(int BUNTTON_PUSH){
       delay(10);
       if(!LittleFS.begin()){
@@ -375,23 +410,23 @@ void readFile(fs::FS &fs, const char * path) {
       if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }
+      
       #if defined(DEBUG)
       Serial.println("✨✨✨ Load config JSON ✨✨✨");
-      #endif      
-      loadConfigWiFi();
-      loadConfigNotify();
-
       readFile(LittleFS, "/notify_config.json");
+      #endif 
       
       return true; // สำเร็จ (เข้าสู่ Normal Mode)
 
     }
 
     ConfigWiFi getConfigWiFi() const {
+      loadConfigWiFi();
       return configWiFi;
     }
     
     ConfigNotify getConfigNotify() const {
+      loadConfigNotify();
       return configNotify;
     }
 
