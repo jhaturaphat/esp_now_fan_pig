@@ -1,22 +1,6 @@
 /*
- * ESP-01 Sensor Code - ส่งสัญญาณสถานะ Switch แม่เหล็กไปยัง Gateway
- * ใช้ ESP-NOW Protocol สำหรับการสื่อสาร
- * 
- * การต่อวงจร ESP-01 (วิธีที่ 4 - ใช้ RXD):
- * - GPIO3 (RXD): Reed Switch (Pull-up ภายใน)
- * - GPIO2: LED สถานะ (Optional)
- * - GPIO0: ปล่อยว่าง หรือ Pull-up 10kΩ ไป VCC (เพื่อ boot ปกติ)
- * - VCC: 3.3V
- * - GND: Ground
- * 
- * วงจร Reed Switch:
- * GPIO3 (RXD) ---|Reed Switch|--- GND
- * 
- * *** สำคัญ: 
- * 1. ต้องเปลี่ยน SENSOR_ID ในแต่ละตัวให้ต่างกัน (1-7)
- * 2. ปิด Serial.begin() เพราะใช้ RXD เป็น GPIO
- * 3. ห้ามใช้ Serial.print() ใดๆ
- * 4. RXD สะอาดกว่า TXD (ไม่มี boot message)
+Future BOX FB12
+https://easyeda.com/editor#id=c7245d4e303c4946be1aa8df7e19e6da|8ff0f60a614a4b55ace3a2a8d3f7e9fd|8b1b3ca6d1164febb14547686424542b|36900463ee184503a31e06a342c9d34d
  */
   #include "ConfigManager.h"
   #include <ESP8266WiFi.h> 
@@ -165,9 +149,10 @@ void loop() {
     }
   }
   
-  // ส่ง Heartbeat ทุก 10 วินาที
-  // if (current_time - last_heartbeat > HEARTBEAT_INTERVAL)
-  if (current_time - last_heartbeat > random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX)) {
+  // สุ่มครั้งเดียวต่อ heartbeat
+  if (current_time - last_heartbeat > HEARTBEAT_INTERVAL){
+  // คำนวณ random() ทุก loop
+  // if (current_time - last_heartbeat > random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX)) {
     sendSensorData(true);
     last_heartbeat = current_time;
     // กระพริบ LED เมื่อส่งข้อมูล
