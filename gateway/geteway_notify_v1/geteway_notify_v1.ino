@@ -2,6 +2,10 @@
 
 #include "ConfigManager.h"
 #include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 #include <ArduinoJson.h>
 
 
@@ -16,8 +20,9 @@
 #define TEST_PIN 23 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
-// const char* ssid = "kid_2.4GHz";
-// const char* password = "xx3xx3xx";
+// ตั้งค่า NTP Client
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 25200, 60000); // UTC+7 สำหรับประเทศไทย
 
 ConfigManager configManager;
 ConfigWiFi configWiFi;
@@ -56,9 +61,14 @@ void setup() {
   Serial.println("---------------------------");
   #endif
   
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(configWiFi.ssid, configWiFi.password);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
+    // LED_STATUS
+    digitalWrite(LED_STATUS, LOW);
+    delay(200);
+    digitalWrite(LED_STATUS, HIGH);
     #if defined(DEBUG)
     Serial.println("Connecting to WiFi...");
     #endif
@@ -85,6 +95,9 @@ void setup() {
     #endif
     return;
   }
+
+  // เริ่มต้น NTP Client
+  timeClient.begin();
 
 }
 
