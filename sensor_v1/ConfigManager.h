@@ -129,7 +129,7 @@ private:
         WiFi.setSleep(false);
         system_update_cpu_freq(160);
 
-        String apName = "SETUP-" + chipID();         
+        String apName = "🛜SETUP-" + chipID();         
         
         // WiFi.mode(WIFI_AP_STA);
         WiFi.softAP(apName.c_str(),"", 1, 0, 4); // ช่อง 1, จำกัด 4 อุปกรณ์

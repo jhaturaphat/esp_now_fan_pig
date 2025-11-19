@@ -11,7 +11,7 @@
 
 #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
-#define KID_PIN 34 //สำหรับป้องกันโปรแกรม
+#define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 
 #define RELAY1_PIN 16  //out put
 #define RELAY2_PIN 17  //out put
@@ -31,7 +31,7 @@ ConfigNotify configNotify;
 void setup() {
   Serial.begin(115200);
    
-  pinMode(KID_PIN, INPUT_PULLUP);
+  pinMode(KID_BUG_PIN, INPUT_PULLUP);
 
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
@@ -89,11 +89,12 @@ void setup() {
   #endif
 
   
-  if(digitalRead(KID_PIN) == LOW){  
+  if(digitalRead(KID_BUG_PIN) != LOW){      
     #if defined(DEBUG)  
     Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
     #endif
-    return;
+    // return;
+    ESP.restart();
   }
 
   // เริ่มต้น NTP Client

@@ -8,7 +8,7 @@ EasyEAD URL https://easyeda.com/editor#id=c7245d4e303c4946be1aa8df7e19e6da|8ff0f
 
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
-#define CONFIG_BUTTON_PIN  1 // GPIO1: (TX) (LOW = Config Mode)
+#define CONFIG_BUTTON_PIN  0 // GPIO0: 
 #define REED_SWITCH_PIN 3   // GPIO3 (RXD) สำหรับ reed switch
 #define STATUS_LED_PIN 2    // GPIO2 สำหรับ LED สถานะ
 

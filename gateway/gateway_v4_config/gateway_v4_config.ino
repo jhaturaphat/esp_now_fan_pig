@@ -4,7 +4,7 @@
 #include <esp_wifi.h>
 #include <ArduinoJson.h>
 
-#define DEBUG  // เอาคอมเมนต์ออกเมิ่ออยู่ในโหมด DEBUG
+// #define DEBUG  // เอาคอมเมนต์ออกเมิ่ออยู่ในโหมด DEBUG
 
 #define MAX_SENSORS 10
 
@@ -26,16 +26,12 @@
 #define TIMEOUT_SIREN 10000 // 10 วินาที timeout
 
 // Delay
-#if defined(DEBUG)
 int period = 5000; // 10 วินาที
 unsigned long time_now = 0;
-unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long SIREN_DURATION = 5000; // 5 วินาที
 unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
-#endif
-// ตัวแปรที่ต้องกำหนดจาก config
-// #define CHANNEL 1
+unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 
 // เก็บสถานะของแต่ละ sensor
 struct sensor_storage {  
@@ -252,21 +248,24 @@ void loop() {
   CheckHashAlarm();
   if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
     digitalWrite(RELAY1_PIN, LOW);
-    #if defined(DEBUG)
+    
     if (millis() - PERIOD_SIREN >= SIREN_DURATION) {
       PERIOD_SIREN = millis();
+      #if defined(DEBUG)
       Serial.printf("แจ้งเตือน %d 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n", alarm_count);
-    #endif
+      #endif
     }
   } 
   if(offline_count > 0 ){
     digitalWrite(RELAY1_PIN, LOW);
-    #if defined(DEBUG)
+    
     if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
       PERIOD_LOSS = millis();
+      #if defined(DEBUG)
       Serial.printf("มีเซ็นเซอร์ %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
+      #endif
     }
-    #endif
+    
   } 
   #if defined(DEBUG)
   printDebugSensorStatus();
