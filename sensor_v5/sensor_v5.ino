@@ -212,10 +212,13 @@ void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   }
 }
 
-void blinkStatusLED() {
+void blinkStatusLED() {  
+  if(!confirmed_switch_state){
+    digitalWrite(STATUS_LED_PIN, LOW);
+  }
   for (int i = 0; i < 4; i++) {
     digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(200);
+    delay(200);    
     digitalWrite(STATUS_LED_PIN, LOW);
     delay(200);
   }
