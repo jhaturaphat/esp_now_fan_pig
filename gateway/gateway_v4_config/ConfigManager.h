@@ -13,7 +13,7 @@ struct DeviceConfig {
 
 // --- HTML Template (อยู่นอกคลาส) ---
 const char index_html[] PROGMEM = R"rawliteral(
- 	<!DOCTYPE HTML><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP Config</title><style>
+ 	<!DOCTYPE HTML><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP Config</title><style>
     body{font-family:Arial;margin:0;padding:0;text-align:center;background:#f9f9f9}
     h1{margin:20px;font-size:2em}
     .container{max-width:500px;margin:20px auto;padding:20px;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
@@ -26,7 +26,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     .error{color:red}.success{color:green}
     @media(max-width:600px){h1{font-size:1.5em}.container{margin:10px;padding:15px}.btn{padding:10px;font-size:15px}}
     </style></head><body>
-    <h1>Sensor Config</h1>
+    <h1>Reciver Gateway Config</h1>
+    <h3>การกำหนดค่าเกตเวย์ตัวรับ</h3>
     <div class="container">
     <form id="configForm" onsubmit="submitForm(event)">
     <label for="ch">Channel ID (1-13):</label>
@@ -109,7 +110,7 @@ private:
            // Serial.println("\n*** ConfigManager: Entering Configuration Mode ***");        
         WiFi.setSleep(false);
         WiFi.mode(WIFI_AP);        
-        String apName = "SETUP_NOW-" + chipID();          
+        String apName = "📲GW_NOW-" + chipID();          
         WiFi.softAP(apName.c_str(),"", 1, 0, 4); // ช่อง 1, จำกัด 4 อุปกรณ์
        
         delay(50); //หน่วงเวลา 100 ms เพื่อให้ AP เริ่มทำงาน
