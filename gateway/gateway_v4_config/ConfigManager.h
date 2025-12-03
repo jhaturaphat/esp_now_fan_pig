@@ -3,6 +3,7 @@
 #include <EEPROM.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
+#include "esp_mac.h"
 
 #define MAX_CH 13
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
@@ -35,6 +36,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     <input type="submit" value="Save & Restart" class="btn">
     </form>
     <div id="message" class="message"></div>
+    <hr>
+    <div>%MAC_ADDR%</div>
     <div>Copyright by Mr.Jaturapat Siriboon</div>
     </div>
     <script>
@@ -57,7 +60,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 class ConfigManager {
 private:
     
-    const int LED_PIN = 2;           // GPIO2: Output (LED status)
+    const int LED_PIN = 18;           // GPIO2: Output (LED status)
     const int EEPROM_SIZE = sizeof(DeviceConfig);
 
     // --- Web Server Objects ---    
@@ -91,6 +94,8 @@ private:
 
         if(var == "CH_VALUE"){
             return String(currentConfig.channel);
+        }else if(var == "MAC_ADDR"){
+            return getInterfaceMacAddress(ESP_MAC_WIFI_STA);
         }      
         return String();
     }
@@ -104,6 +109,17 @@ private:
       return chipIDStr;
     }
 
+    String getInterfaceMacAddress(esp_mac_type_t interface) {
+
+        String mac = "";
+        unsigned char mac_base[6] = {0};
+        if (esp_read_mac(mac_base, interface) == ESP_OK) {
+            char buffer[18];  // 6*2 characters for hex + 5 characters for colons + 1 character for null terminator
+            sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X", mac_base[0], mac_base[1], mac_base[2], mac_base[3], mac_base[4], mac_base[5]);
+            mac = buffer;
+        }
+        return mac;
+    }
 
     // 4. โหมดตั้งค่า (รัน Web Server)
     void enterConfigMode() {   
@@ -139,6 +155,7 @@ private:
         }else{
             html.replace("%CH_VALUE%", String(currentConfig.channel));
         }
+            html.replace("%MAC_ADDR%", getInterfaceMacAddress(ESP_MAC_WIFI_STA));
 
             request->send(200, "text/html", html);
         });

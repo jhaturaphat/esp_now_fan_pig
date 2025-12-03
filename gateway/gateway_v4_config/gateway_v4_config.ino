@@ -176,7 +176,7 @@ void setup() {
   pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT_PULLUP);
 
-
+  delay(500);
   cfgManager.begin(CONFIG_PIN); 
   #if defined(DEBUG)
   Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
@@ -239,6 +239,10 @@ void setup() {
     return;
   }
 
+  digitalWrite(LED_STATUS, LOW);
+  delay(100);
+  digitalWrite(LED_STATUS, HIGH);
+  delay(100);
 }
 
 
@@ -248,7 +252,7 @@ void loop() {
   CheckHashAlarm();
   if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
     digitalWrite(RELAY1_PIN, LOW);
-    
+    digitalWrite(LED_STATUS, LOW);
     if (millis() - PERIOD_SIREN >= SIREN_DURATION) {
       PERIOD_SIREN = millis();
       #if defined(DEBUG)
@@ -258,7 +262,7 @@ void loop() {
   } 
   if(offline_count > 0 ){
     digitalWrite(RELAY1_PIN, LOW);
-    
+    digitalWrite(LED_STATUS, LOW);
     if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
       PERIOD_LOSS = millis();
       #if defined(DEBUG)
@@ -270,5 +274,10 @@ void loop() {
   #if defined(DEBUG)
   printDebugSensorStatus();
   #endif
+
+  // digitalWrite(LED_STATUS, LOW);
+  // delay(100);
+  // digitalWrite(LED_STATUS, HIGH);
+  // delay(100);
 
 }
