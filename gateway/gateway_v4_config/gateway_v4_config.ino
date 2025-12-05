@@ -162,6 +162,15 @@ void sendSensorsData(){
   Serial2.print("\n"); // ใช้ newline เป็น delimiter
 }
 
+void blinkLED(){
+  for(int i = 0; i < 5; i++){
+    digitalWrite(LED_STATUS, HIGH);
+    delay(100);
+    digitalWrite(LED_STATUS, LOW);
+    delay(100);
+  }
+}
+
 void setup() {
   #if defined(DEBUG)
   Serial.begin(115200);
@@ -176,7 +185,6 @@ void setup() {
   pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT_PULLUP);
 
-  delay(500);
   cfgManager.begin(CONFIG_PIN); 
   #if defined(DEBUG)
   Serial.println("เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว");
@@ -239,45 +247,52 @@ void setup() {
     return;
   }
 
-  digitalWrite(LED_STATUS, LOW);
+  blinkLED();
+
+  digitalWrite(RELAY1_PIN, LOW);
+  digitalWrite(RELAY2_PIN, LOW);
   delay(100);
-  digitalWrite(LED_STATUS, HIGH);
-  delay(100);
+  digitalWrite(RELAY1_PIN, HIGH); 
+  digitalWrite(RELAY2_PIN, HIGH);  
+
 }
 
 
 
 void loop() {
+  // blinkLED();
+  digitalWrite(LED_STATUS, LOW);
   checkSensorsCommunication();
   CheckHashAlarm();
   if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
     digitalWrite(RELAY1_PIN, LOW);
-    digitalWrite(LED_STATUS, LOW);
-    if (millis() - PERIOD_SIREN >= SIREN_DURATION) {
-      PERIOD_SIREN = millis();
+    digitalWrite(RELAY2_PIN, LOW);
+    // digitalWrite(LED_STATUS, HIGH);
+    if (millis() - PERIOD_SIREN >= SIREN_DURATION) {      
+      PERIOD_SIREN = millis();      
       #if defined(DEBUG)
       Serial.printf("แจ้งเตือน %d 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n", alarm_count);
-      #endif
+      #endif  
+      sendSensorsData();    
     }
-  } 
-  if(offline_count > 0 ){
-    digitalWrite(RELAY1_PIN, LOW);
-    digitalWrite(LED_STATUS, LOW);
+  }else{
+    digitalWrite(RELAY1_PIN, HIGH);     
+  }
+  // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ
+  if(offline_count > 0 ){  
+    digitalWrite(RELAY2_PIN, LOW);
     if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
       PERIOD_LOSS = millis();
+      sendSensorsData();
       #if defined(DEBUG)
-      Serial.printf("มีเซ็นเซอร์ %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
-      #endif
-    }
-    
-  } 
+      Serial.printf("มีเซ็นเซอร์จำนวน %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
+      #endif      
+    }    
+  }else{
+    digitalWrite(RELAY2_PIN, HIGH);    
+  }
   #if defined(DEBUG)
   printDebugSensorStatus();
-  #endif
-
-  // digitalWrite(LED_STATUS, LOW);
-  // delay(100);
-  // digitalWrite(LED_STATUS, HIGH);
-  // delay(100);
-
+  #endif  
+  digitalWrite(LED_STATUS, HIGH);
 }

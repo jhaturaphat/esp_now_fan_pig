@@ -36,8 +36,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <input type="submit" value="Save & Restart" class="btn">
     </form>
     <div id="message" class="message"></div>
-    <hr>
-    <div>%MAC_ADDR%</div>
+    <hr><div>%MAC_ADDR%</div><hr>
     <div>Copyright by Mr.Jaturapat Siriboon</div>
     </div>
     <script>
@@ -233,7 +232,7 @@ public:
         
         // 1. ตรวจสอบการกดสวิตช์เพื่อเข้าโหมดตั้งค่า
         pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
-        delay(100); 
+        delay(500); 
 
         bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
         

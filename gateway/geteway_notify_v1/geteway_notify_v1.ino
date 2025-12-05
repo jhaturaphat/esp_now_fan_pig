@@ -38,10 +38,10 @@ void setup() {
   pinMode(LED_STATUS, OUTPUT);
   pinMode(TEST_PIN, INPUT);
   pinMode(DISABLE_SIREN, INPUT);
-
+  
   if(!configManager.begin(CONFIG_PIN)){
-    #if defined(DEBUG)
     // ❌ ถ้าโหลดไม่สำเร็จ
+    #if defined(DEBUG)    
     Serial.println("Failed to load notify config!");
     #endif
     return;

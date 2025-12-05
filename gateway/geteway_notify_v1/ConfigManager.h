@@ -405,8 +405,8 @@ void readFile(fs::FS &fs, const char * path) {
       pinMode(BUNTTON_PUSH, INPUT_PULLUP);        
       delay(10);
       pinMode(LED_STATUS, OUTPUT);
-      digitalWrite(LED_STATUS, LOW);
-      delay(10);
+      digitalWrite(LED_STATUS, LOW);      
+      delay(1000);
       if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }
