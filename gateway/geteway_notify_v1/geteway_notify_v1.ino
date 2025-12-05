@@ -20,6 +20,10 @@
 #define TEST_PIN 23 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
+#define RXD2 32
+#define TXD2 33
+
+
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 25200, 60000); // UTC+7 สำหรับประเทศไทย
@@ -29,7 +33,10 @@ ConfigWiFi configWiFi;
 ConfigNotify configNotify;
 
 void setup() {
+  #if defined(DEBUG) 
   Serial.begin(115200);
+  #endif
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
    
   pinMode(KID_BUG_PIN, INPUT_PULLUP);
 

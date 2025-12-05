@@ -119,6 +119,35 @@ void CheckHashAlarm(){
   }
 }
 
+void sendSensorsData(){
+  StaticJsonDocument<1024> doc;  
+  // สร้าง array ของ sensors
+  JsonArray sensors = doc.createNestedArray("sensors");
+  
+  for(int i = 0; i < MAX_SENSORS; i++){
+    JsonObject obj = sensors.createNestedObject();
+    obj["id"] = i + 1;
+    obj["online"] = sensors_storage[i].is_online;
+    obj["switch"] = sensors_storage[i].switch_state;
+    obj["uptime"] = sensors_storage[i].last_seen / 1000;    
+  }
+  
+  doc["alarm_count"] = alarm_count;
+  doc["offline_count"] = offline_count;
+  
+  serializeJson(doc, Serial2);
+  Serial2.print("\n");
+}
+
+void blinkLED(){
+  for(int i = 0; i < 5; i++){
+    digitalWrite(LED_STATUS, HIGH);
+    delay(100);
+    digitalWrite(LED_STATUS, LOW);
+    delay(100);
+  }
+}
+
 #if defined(DEBUG)
 void printDebugSensorStatus(){
   yield();
@@ -145,31 +174,6 @@ void printDebugSensorStatus(){
   }
 }
 #endif
-
-void sendSensorsData(){
-  StaticJsonDocument<1024> doc;
-  JsonArray arr = doc.to<JsonArray>();
-
-  for(int i = 0; i < MAX_SENSORS; i++){
-    JsonObject obj = arr.createNestedObject();
-    obj["id"] = i + 1;
-    obj["online"] = sensors_storage[i].is_online;
-    obj["switch"] = sensors_storage[i].switch_state;
-    obj["uptime"] = sensors_storage[i].last_seen / 1000;
-  }
-  // ส่งผ่าน Serial พร้อม delimiter
-  serializeJson(doc, Serial2);
-  Serial2.print("\n"); // ใช้ newline เป็น delimiter
-}
-
-void blinkLED(){
-  for(int i = 0; i < 5; i++){
-    digitalWrite(LED_STATUS, HIGH);
-    delay(100);
-    digitalWrite(LED_STATUS, LOW);
-    delay(100);
-  }
-}
 
 void setup() {
   #if defined(DEBUG)
