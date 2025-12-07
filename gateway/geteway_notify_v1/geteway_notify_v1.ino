@@ -2,11 +2,12 @@
 
 #include "ConfigManager.h"
 #include <WiFi.h>
-#include <HTTPClient.h>
+// #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
+#include "Notifier.h"
 
 
 #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
@@ -18,6 +19,7 @@
 #define LED_STATUS 18  //out put
 #define CONFIG_PIN 19  //input pulll up
 #define TEST_PIN 23 //input pulll up
+#define TEST_PIN_SERIAL 26 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
 #define RXD2 32
@@ -26,11 +28,60 @@
 
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 25200, 60000); // UTC+7 สำหรับประเทศไทย
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 7 * 3600, 60000); // UTC+7 สำหรับประเทศไทย
+// ตัวแปรสำหรับเก็บชั่วโมงล่าสุดที่มีการแจ้งเตือน
+int lastNotifiedHour = -1;
+const int NOTIFICATION_INTERVAL_HOURS = 2; 
+// --- ส่วนเพิ่มเติมสำหรับ Non-blocking ---
+unsigned long previousMillisUpdate = 0;
+// กำหนดช่วงเวลาที่จะอัปเดตเวลาจาก NTP (ทุก 1 นาที = 60000 มิลลิวินาที)
+const long intervalUpdate = 60000; 
+// --------------------------------------------------------------
 
 ConfigManager configManager;
 ConfigWiFi configWiFi;
-ConfigNotify configNotify;
+ConfigNotify configNotify; // การตั้งค่าเลือกการแจ้งเตือน
+
+// สร้าง object
+Notifier notifier;
+
+String inputBuffer = "";
+
+void receiveData() {
+  while (Serial2.available()) {
+    char c = Serial2.read();
+    
+    if (c == '\n') {
+      // ได้ข้อมูลครบแล้ว
+      processJson(inputBuffer);
+      inputBuffer = "";  // Clear buffer
+    } else {
+      inputBuffer += c;
+    }
+  }
+}
+
+void processJson(String jsonString) {
+  digitalWrite(TEST_PIN_SERIAL, HIGH);
+  StaticJsonDocument<1024> doc;
+  DeserializationError error = deserializeJson(doc, jsonString);
+  
+  if (error) {
+    digitalWrite(TEST_PIN_SERIAL, LOW);
+    Serial.println("JSON parse failed!");
+    return;
+  }
+  
+  Serial.println("📨 Data received!");
+  notifier.sendAll(jsonString);
+  // ประมวลผลข้อมูล
+  JsonArray sensors = doc["sensors"];
+  for (JsonObject sensor : sensors) {
+    int id = sensor["id"];
+    bool online = sensor["online"];
+    // ... ทำอะไรต่อตามต้องการ
+  }
+}
 
 void setup() {
   #if defined(DEBUG) 
@@ -44,6 +95,7 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
   pinMode(TEST_PIN, INPUT);
+  pinMode(TEST_PIN_SERIAL, INPUT);
   pinMode(DISABLE_SIREN, INPUT);
   
   if(!configManager.begin(CONFIG_PIN)){
@@ -94,6 +146,24 @@ void setup() {
     Serial.printf("Interval: %d\n", configNotify.interval);
     Serial.println("---------------------------");     
   #endif
+  NOTIFICATION_INTERVAL_HOURS = configNotify.interval;
+  // ตั้งค่า Notifier
+  // 1 = ntfy, 2 = telegram, 3 = discord
+  switch(configNotify.type){
+    case 1:
+      notifier.setupNtfy(configNotify.url);
+      notifier.enableNtfy(true);
+    break;
+    case 2:
+      notifier.setupTelegram(configNotify.url, configNotify.channel);
+      notifier.enableNtfy(true);
+    break;
+    case 3:
+      notifier.setupDiscord(configNotify.url);
+      notifier.enableNtfy(true);
+    break;
+  }
+    
 
   
   if(digitalRead(KID_BUG_PIN) != LOW){      
@@ -109,6 +179,23 @@ void setup() {
 
 }
 
-void loop() {
+void loop() {  
+  unsigned long currentMillis = millis();
+  
+  // ตรวจสอบเวลาด้วย millis() ว่าถึงรอบต้องอัปเดตเวลา NTP หรือยัง
+  if (currentMillis - previousMillisUpdate >= intervalUpdate) {
+    previousMillisUpdate = currentMillis;
+    timeClient.update();
+  }
+  int currentHour = timeClient.getHours();
+  if (currentHour != lastNotifiedHour) {
+    if (currentHour % NOTIFICATION_INTERVAL_HOURS == 0) {      
+      // *** ใส่โค้ดแจ้งเตือนของคุณที่นี่ ***      
+      digitalWrite(TEST_PIN_SERIAL, LOW);     
+      lastNotifiedHour = currentHour;
+    }
+  }
+
   delay(100);
+  receiveData();
 }

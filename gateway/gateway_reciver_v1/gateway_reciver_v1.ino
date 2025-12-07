@@ -248,7 +248,7 @@ void setup() {
     #if defined(DEBUG)  
     Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
     #endif
-    return;
+    ESP.restart();
   }
 
   blinkLED();
@@ -261,6 +261,12 @@ void setup() {
 
 }
 
+void test_gw(){
+  // TEST_PIN
+  if(digitalRead(TEST_PIN) == LOW) {
+    sendSensorsData(); 
+  }
+}
 
 
 void loop() {
@@ -268,6 +274,8 @@ void loop() {
   digitalWrite(LED_STATUS, LOW);
   checkSensorsCommunication();
   CheckHashAlarm();
+  test_gw();
+
   if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
     digitalWrite(RELAY1_PIN, LOW);
     digitalWrite(RELAY2_PIN, LOW);

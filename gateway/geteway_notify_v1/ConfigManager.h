@@ -14,10 +14,16 @@ struct ConfigWiFi {
   char* password = nullptr;
 };
 
+/*
+ืntfy = URLtopic
+discord = Webhook URL
+telegram = Token + chat_id
+*/
+// 1 = ntfy, 2 = telegram, 3 = discord
 struct ConfigNotify {  
   char* url = nullptr;
   char* channel = nullptr;
-  uint8_t type = 3;
+  uint8_t type = 1;
   uint8_t interval = 6;
 };
 
