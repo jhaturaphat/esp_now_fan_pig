@@ -22,8 +22,9 @@
 #define TEST_PIN_SERIAL 26 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
-#define RXD2 32
-#define TXD2 33
+// กำหนดค่าให้สลับกันกับ ตัวส่ง 
+#define RXD2 33
+#define TXD2 32
 
 
 // ตั้งค่า NTP Client
@@ -31,7 +32,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 7 * 3600, 60000); // UTC+7 สำหรับประเทศไทย
 // ตัวแปรสำหรับเก็บชั่วโมงล่าสุดที่มีการแจ้งเตือน
 int lastNotifiedHour = -1;
-const int NOTIFICATION_INTERVAL_HOURS = 2; 
+unsigned int NOTIFICATION_INTERVAL_HOURS = 2; 
 // --- ส่วนเพิ่มเติมสำหรับ Non-blocking ---
 unsigned long previousMillisUpdate = 0;
 // กำหนดช่วงเวลาที่จะอัปเดตเวลาจาก NTP (ทุก 1 นาที = 60000 มิลลิวินาที)
@@ -95,7 +96,7 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
   pinMode(TEST_PIN, INPUT);
-  pinMode(TEST_PIN_SERIAL, INPUT);
+  pinMode(TEST_PIN_SERIAL, OUTPUT);
   pinMode(DISABLE_SIREN, INPUT);
   
   if(!configManager.begin(CONFIG_PIN)){
@@ -156,11 +157,11 @@ void setup() {
     break;
     case 2:
       notifier.setupTelegram(configNotify.url, configNotify.channel);
-      notifier.enableNtfy(true);
+      notifier.enableTelegram(true);
     break;
     case 3:
       notifier.setupDiscord(configNotify.url);
-      notifier.enableNtfy(true);
+      notifier.enableDiscord(true);
     break;
   }
     
@@ -179,7 +180,18 @@ void setup() {
 
 }
 
-void loop() {  
+void test_gw(){
+  // TEST_PIN
+  if((digitalRead(TEST_PIN) == LOW)) {
+    digitalWrite(TEST_PIN_SERIAL, LOW); 
+    delay(100);  
+  }else{
+    digitalWrite(TEST_PIN_SERIAL, HIGH);   
+  }
+}
+
+void loop() { 
+  test_gw(); 
   unsigned long currentMillis = millis();
   
   // ตรวจสอบเวลาด้วย millis() ว่าถึงรอบต้องอัปเดตเวลา NTP หรือยัง

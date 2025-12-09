@@ -1,4 +1,8 @@
+// https://discord.com/api/webhooks/1427287898759368744/pQCXfltKyhnN_rASeL4Jt-G2FGqFim8USSBepLEn0mDP7LAyFVhvV8diZkdH_Pco9ZB0
+
 #include "Notifier.h"
+
+#define DEBUG
 
 Notifier::Notifier() {
   discord_enabled = false;
@@ -110,11 +114,14 @@ String Notifier::createNtfyMessage(String jsonString) {
   return message;
 }
 
+// ส่งข้อมูลรายงานไปยัง Discord
 bool Notifier::sendDiscord(String jsonString) {
   if(!discord_enabled || WiFi.status() != WL_CONNECTED) {
     return false;
   }
   
+  WiFiClientSecure client;
+  client.setInsecure(); // ไม่ตรวจสอบ SSL certificate (ใช้เฉพาะการทดสอบ)
   HTTPClient http;
   
   String message = createDiscordMessage(jsonString);
@@ -125,19 +132,28 @@ bool Notifier::sendDiscord(String jsonString) {
   String payload;
   serializeJson(discordDoc, payload);
   
-  http.begin(discord_webhook);
-  http.addHeader("Content-Type", "application/json");
+  if(http.begin(client, discord_webhook)){
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("User-Agent", "ESP32-Discord-Bot");
   
-  int httpCode = http.POST(payload);
-  http.end();
-  
-  if(httpCode > 0) {
-    Serial.println("✅ Discord: Sent! Code: " + String(httpCode));
-    return true;
-  } else {
-    Serial.println("❌ Discord: Failed! Code: " + String(httpCode));
-    return false;
+    int httpCode = http.POST(payload);   
+    
+    if(httpCode > 0) {
+      Serial.println("✅ Discord: Sent! Code: " + String(httpCode));
+      return true;
+    } else {
+      Serial.println("❌ Discord: Failed! Code: " + String(httpCode));
+      return false;
+    }
+
+    http.end();
+
+  }else {
+    #if defined(DEBUG) 
+    Serial.println("Failed to begin HTTP connection");
+    #endif
   }
+  
 }
 
 bool Notifier::sendTelegram(String jsonString) {

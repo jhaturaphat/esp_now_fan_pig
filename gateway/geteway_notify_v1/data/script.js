@@ -54,7 +54,7 @@ function saveNotifycfg() {
           sendConfigNotify(playload);
         break;
         case "discord":
-          playload.url = (document.getElementById("discord").value).trim();
+          playload.url = (document.getElementById("discord_webhook").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);

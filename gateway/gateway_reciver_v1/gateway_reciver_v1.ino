@@ -8,8 +8,6 @@
 
 #define MAX_SENSORS 10
 
-#define SECURITY 34 //สำหรับใช้ป้องกันการ COPY
-
 #define KID_PIN 34 //สำหรับป้องกันโปรแกรม
 
 #define RELAY1_PIN 16  //out put
@@ -17,6 +15,7 @@
 #define LED_STATUS 18  //out put
 #define CONFIG_PIN 19  //input pulll up
 #define TEST_PIN 23 //input pulll up
+#define TEST_PIN_SERIAL 26 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
 
 #define RXD2 32
@@ -32,6 +31,7 @@ const unsigned long SIREN_DURATION = 5000; // 5 วินาที
 unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
+bool handleAlarm = false; 
 
 // เก็บสถานะของแต่ละ sensor
 struct sensor_storage {  
@@ -187,7 +187,8 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
   pinMode(CONFIG_PIN, INPUT_PULLUP);
-  pinMode(TEST_PIN, INPUT_PULLUP);
+  pinMode(TEST_PIN, INPUT);
+  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
 
   cfgManager.begin(CONFIG_PIN); 
   #if defined(DEBUG)
@@ -263,7 +264,7 @@ void setup() {
 
 void test_gw(){
   // TEST_PIN
-  if(digitalRead(TEST_PIN) == LOW) {
+  if((digitalRead(TEST_PIN) == LOW) || (digitalRead(TEST_PIN_SERIAL) == LOW)) {
     sendSensorsData(); 
   }
 }
@@ -285,9 +286,14 @@ void loop() {
       #if defined(DEBUG)
       Serial.printf("แจ้งเตือน %d 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n", alarm_count);
       #endif  
+      handleAlarm = true;
       sendSensorsData();    
     }
   }else{
+    if(handleAlarm && (alarm_count == 0)){
+      handleAlarm = !handleAlarm;
+      sendSensorsData(); 
+    }
     digitalWrite(RELAY1_PIN, HIGH);     
   }
   // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ
