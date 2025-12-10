@@ -26,10 +26,14 @@ unsigned long last_send_time = 0;
 unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;
 // ค่าตั้งเวลา
-const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
+// const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
 const unsigned long HEARTBEAT_INTERVAL = random(500, 10000); // ส่ง heartbeat ทุก 5-10 วินาที
 const unsigned long DEBOUNCE_DELAY = 200;        // รอ 200ms เพื่อยืนยันสถานะ
 const unsigned long CONFIRMATION_DELAY = 500;    // รอ 500ms ก่อนส่งข้อมูล
+
+// ประกาศตัวแปร global สำหรับ LED Status
+unsigned long led_blink_start = 0;
+const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
 
 // เพิ่มในส่วนกำหนดตัวแปรด้านบน
 #define RANDOM_DELAY_MIN 100    // หน่วงเวลาขั้นต่ำ (10ms)
@@ -122,6 +126,7 @@ void setup() {
 }
 
 void loop() {
+
   // อ่านสถานะ switch
   bool current_switch_state = digitalRead(REED_SWITCH_PIN);
   unsigned long current_time = millis();
@@ -144,7 +149,7 @@ void loop() {
         sendSensorData(false);
         last_send_time = current_time;        
         // กระพริบ LED เมื่อส่งข้อมูล
-        blinkStatusLED();
+        // blinkStatusLED();
       }
     }
   }
@@ -156,9 +161,13 @@ void loop() {
     sendSensorData(true);
     last_heartbeat = current_time;
     // กระพริบ LED เมื่อส่งข้อมูล
-    blinkStatusLED();
+    // blinkStatusLED();
   }
-  
+  // ตรวจสอบว่าถึงเวลาปิด LED หรือยัง
+  if(led_blink_start > 0 && millis() - led_blink_start >= LED_BLINK_DURATION) {
+    digitalWrite(STATUS_LED_PIN, HIGH);
+    led_blink_start = 0; // reset
+  }
   // เข้าสู่โหมดประหยัดไฟ
   delay(100);
 }
@@ -192,6 +201,10 @@ void sendSensorData(bool is_heartbeat) {
 
 // Callback เมื่อส่งข้อมูลเสร็จ
 void onDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
+  // เปิด LED และบันทึกเวลา
+  digitalWrite(STATUS_LED_PIN, LOW);
+  led_blink_start = millis();
+
   #if defined(DEBUG)
   char macStr[18]; // array สำหรับเก็บสตริง MAC address
   

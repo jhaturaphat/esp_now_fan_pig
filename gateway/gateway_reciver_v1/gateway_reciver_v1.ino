@@ -32,6 +32,9 @@ unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็�
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 bool handleAlarm = false; 
+// ประกาศตัวแปร global สำหรับ LED Status
+unsigned long led_blink_start = 0;
+const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
 
 // เก็บสถานะของแต่ละ sensor
 struct sensor_storage {  
@@ -64,6 +67,10 @@ DeviceConfig myConfig;
 
 // Callback สำหรับรับข้อมูล (สำหรับ ESP32 Arduino Core 3.x)
 void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len){
+  // เปิด LED และบันทึกเวลา
+  digitalWrite(LED_STATUS, HIGH);
+  led_blink_start = millis();
+  // สร้าง object sensor
   sensor_message msg;
   memcpy(&msg, incomingData, sizeof(msg));
 
@@ -74,8 +81,9 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     sensors_storage[index].is_online = true;
     sensors_storage[index].switch_state = msg.switch_status;
     sensors_storage[index].last_seen = millis();
-    memcpy(sensors_storage[index].mac, recv_info->src_addr, 6);     
+    memcpy(sensors_storage[index].mac, recv_info->src_addr, 6); 
   }
+  
 } //End
 
 void checkSensorsCommunication(){
@@ -271,16 +279,21 @@ void test_gw(){
 
 
 void loop() {
-  // blinkLED();
-  digitalWrite(LED_STATUS, LOW);
+  
   checkSensorsCommunication();
   CheckHashAlarm();
   test_gw();
 
+  // ตรวจสอบว่าถึงเวลาปิด LED หรือยัง
+  if(led_blink_start > 0 && millis() - led_blink_start >= LED_BLINK_DURATION) {
+    digitalWrite(LED_STATUS, LOW);
+    led_blink_start = 0; // reset
+  }
+
   if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
     digitalWrite(RELAY1_PIN, LOW);
     digitalWrite(RELAY2_PIN, LOW);
-    // digitalWrite(LED_STATUS, HIGH);
+    
     if (millis() - PERIOD_SIREN >= SIREN_DURATION) {      
       PERIOD_SIREN = millis();      
       #if defined(DEBUG)
@@ -309,8 +322,7 @@ void loop() {
   }else{
     digitalWrite(RELAY2_PIN, HIGH);    
   }
-  #if defined(DEBUG)
-  printDebugSensorStatus();
+  #if defined(DEBUG) 
+    printDebugSensorStatus(); 
   #endif  
-  digitalWrite(LED_STATUS, HIGH);
 }
