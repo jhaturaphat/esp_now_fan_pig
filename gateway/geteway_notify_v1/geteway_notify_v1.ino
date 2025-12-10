@@ -38,7 +38,11 @@ unsigned long previousMillisUpdate = 0;
 // กำหนดช่วงเวลาที่จะอัปเดตเวลาจาก NTP (ทุก 1 นาที = 60000 มิลลิวินาที)
 const long intervalUpdate = 60000; 
 // --------------------------------------------------------------
-
+// LED Status
+int ledState = LOW;             // ledState used to set the LED
+long previousMillisLED = 0;        // will store last time LED was updated
+long intervalLED = 500;  
+// ----------------------------------------------------
 ConfigManager configManager;
 ConfigWiFi configWiFi;
 ConfigNotify configNotify; // การตั้งค่าเลือกการแจ้งเตือน
@@ -206,6 +210,18 @@ void loop() {
       digitalWrite(TEST_PIN_SERIAL, LOW);     
       lastNotifiedHour = currentHour;
     }
+  }
+
+// LED Blink
+  unsigned long currentMillisLED = millis();
+  if(currentMillisLED - previousMillisLED > intervalLED) {
+     previousMillisLED = currentMillisLED;
+     if (ledState == LOW){
+      ledState = HIGH;
+     }else{
+      ledState = LOW;
+     }     
+    digitalWrite(LED_STATUS, ledState);  
   }
 
   delay(100);
