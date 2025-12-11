@@ -73,18 +73,29 @@ void processJson(String jsonString) {
   
   if (error) {
     digitalWrite(TEST_PIN_SERIAL, LOW);
+    #if defined(DEBUG)
     Serial.println("JSON parse failed!");
+    #endif
     return;
   }
   
+  #if defined(DEBUG)
   Serial.println("📨 Data received!");
+  #endif
   notifier.sendAll(jsonString);
   // ประมวลผลข้อมูล
   JsonArray sensors = doc["sensors"];
-  for (JsonObject sensor : sensors) {
-    int id = sensor["id"];
-    bool online = sensor["online"];
-    // ... ทำอะไรต่อตามต้องการ
+  // for (JsonObject sensor : sensors) {
+  //   int id = sensor["id"];
+  //   bool online = sensor["online"];
+  //   // ... ทำอะไรต่อตามต้องการ
+  // }
+  if((doc["alarm_count"] > 0) || (doc["offline_count"]) > 0){
+    digitalWrite(RELAY1_PIN, HIGH);
+    digitalWrite(RELAY2_PIN, HIGH);
+  }else{
+    digitalWrite(RELAY1_PIN, LOW);
+    digitalWrite(RELAY2_PIN, LOW);
   }
 }
 
@@ -95,10 +106,10 @@ void setup() {
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
    
   pinMode(KID_BUG_PIN, INPUT_PULLUP);
-
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
+  // pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT);
   pinMode(TEST_PIN_SERIAL, OUTPUT);
   pinMode(DISABLE_SIREN, INPUT);
@@ -202,6 +213,8 @@ void loop() {
   if (currentMillis - previousMillisUpdate >= intervalUpdate) {
     previousMillisUpdate = currentMillis;
     timeClient.update();
+    digitalWrite(RELAY1_PIN, HIGH);
+    digitalWrite(RELAY2_PIN, HIGH);
   }
   int currentHour = timeClient.getHours();
   if (currentHour != lastNotifiedHour) {

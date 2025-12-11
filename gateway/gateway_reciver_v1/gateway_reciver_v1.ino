@@ -194,9 +194,10 @@ void setup() {
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
-  pinMode(CONFIG_PIN, INPUT_PULLUP);
+  // pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT);
-  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
+  pinMode(TEST_PIN_SERIAL, INPUT);
+  pinMode(DISABLE_SIREN, INPUT);
 
   cfgManager.begin(CONFIG_PIN); 
   #if defined(DEBUG)
@@ -277,23 +278,39 @@ void test_gw(){
   }
 }
 
+bool dsiable_siren(){
+  if(digitalRead(DISABLE_SIREN) == LOW){
+    return true;
+  }else{
+    return false;
+  }
+}
+
 
 void loop() {
   
   checkSensorsCommunication();
+  // ----------------------------------------------------------------------------------
   CheckHashAlarm();
+  // ----------------------------------------------------------------------------------
   test_gw();
-
+  // ----------------------------------------------------------------------------------
   // ตรวจสอบว่าถึงเวลาปิด LED หรือยัง
   if(led_blink_start > 0 && millis() - led_blink_start >= LED_BLINK_DURATION) {
     digitalWrite(LED_STATUS, LOW);
     led_blink_start = 0; // reset
   }
+  // ----------------------------------------------------------------------------------
+  // if((alarm_count > 0) || (offline_count > 0) || (offline_count >= MAX_SENSORS)){
+    if((alarm_count > 0) || (offline_count > 0)){
+    if(dsiable_siren()){ //หากต้องการปิด siren
+      digitalWrite(RELAY1_PIN, HIGH);
+      digitalWrite(RELAY2_PIN, HIGH);
+    }else{
+      digitalWrite(RELAY1_PIN, LOW);
+      digitalWrite(RELAY2_PIN, LOW);
+    }
 
-  if((alarm_count > 0) || (offline_count >= MAX_SENSORS)){
-    digitalWrite(RELAY1_PIN, LOW);
-    digitalWrite(RELAY2_PIN, LOW);
-    
     if (millis() - PERIOD_SIREN >= SIREN_DURATION) {      
       PERIOD_SIREN = millis();      
       #if defined(DEBUG)
@@ -304,24 +321,24 @@ void loop() {
     }
   }else{
     if(handleAlarm && (alarm_count == 0)){
-      handleAlarm = !handleAlarm;
+      handleAlarm = false;
       sendSensorsData(); 
     }
     digitalWrite(RELAY1_PIN, HIGH);     
+    digitalWrite(RELAY2_PIN, HIGH);     
   }
+  // ---------------------------------------------------------------------------------
   // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ
-  if(offline_count > 0 ){  
-    digitalWrite(RELAY2_PIN, LOW);
-    if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
-      PERIOD_LOSS = millis();
-      sendSensorsData();
-      #if defined(DEBUG)
-      Serial.printf("มีเซ็นเซอร์จำนวน %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
-      #endif      
-    }    
-  }else{
-    digitalWrite(RELAY2_PIN, HIGH);    
-  }
+  // if(offline_count > 0 ){      
+  //   if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
+  //     PERIOD_LOSS = millis();
+  //     sendSensorsData();
+  //     #if defined(DEBUG)
+  //     Serial.printf("มีเซ็นเซอร์จำนวน %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
+  //     #endif      
+  //   }    
+  // }
+  // ---------------------------------------------------------------------------------
   #if defined(DEBUG) 
     printDebugSensorStatus(); 
   #endif  

@@ -43,23 +43,24 @@ String Notifier::createDiscordMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**📊 Sensors Status Report**\n\n";
+  String message = "**🐷🐓Sensors Status Report**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
     int id = sensor["id"];
     bool online = sensor["online"];
     bool switch_state = sensor["switch"];
-    unsigned long uptime = sensor["uptime"];
+    unsigned long uptime = sensor["uptime"];   
     
-    message += "**Sensor " + String(id) + ":** ";
-    message += online ? "🟢 Online" : "🔴 Offline";
-    message += " | Switch: " + String(switch_state ? "ON" : "OFF");
+    message += String(id) + ": ";
+    message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE" ;
+    message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
   }
   
-  message += "\n⚠️ **Alarms:** " + String((int)doc["alarm_count"]);
-  message += "\n❌ **Offline:** " + String((int)doc["offline_count"]);
+ message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"]);
+ message += "\n❌ *Offline:* " + String((int)doc["offline_count"]);
+ message += "\n";
   
   return message;
 }
@@ -68,7 +69,7 @@ String Notifier::createTelegramMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "📊 *Sensors Status Report*\n\n";
+  String message = "**🐷🐓Sensors Status Report**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -78,13 +79,13 @@ String Notifier::createTelegramMessage(String jsonString) {
     unsigned long uptime = sensor["uptime"];
     
     message += "*Sensor " + String(id) + ":* ";
-    message += online ? "🟢 Online" : "🔴 Offline";
-    message += " | Switch: " + String(switch_state ? "ON" : "OFF");
+    message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE";
+    message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
   }
   
-  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"]);
-  message += "\n❌ *Offline:* " + String((int)doc["offline_count"]);
+  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"] + "\n");
+  message += "❌ *Offline:* " + String((int)doc["offline_count"] + "\n");
   
   return message;
 }
@@ -93,7 +94,7 @@ String Notifier::createNtfyMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "Sensors Status Report\n\n";
+  String message = "**🐷🐓Sensors Status Report**\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -103,13 +104,13 @@ String Notifier::createNtfyMessage(String jsonString) {
     unsigned long uptime = sensor["uptime"];
     
     message += "Sensor " + String(id) + ": ";
-    message += online ? "🟢 Online" : "🔴 Offline";
-    message += " | Switch: " + String(switch_state ? "ON" : "OFF");
+    message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE";
+    message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
   }
   
-  message += "\nAlarms: " + String((int)doc["alarm_count"]);
-  message += "\nOffline: " + String((int)doc["offline_count"]);
+  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"] + "\n");
+  message += "❌ *Offline:* " + String((int)doc["offline_count"] + "\n");
   
   return message;
 }
@@ -139,10 +140,14 @@ bool Notifier::sendDiscord(String jsonString) {
     int httpCode = http.POST(payload);   
     
     if(httpCode > 0) {
+      #if defined(DEBUG) 
       Serial.println("✅ Discord: Sent! Code: " + String(httpCode));
+      #endif
       return true;
     } else {
+      #if defined(DEBUG) 
       Serial.println("❌ Discord: Failed! Code: " + String(httpCode));
+      #endif
       return false;
     }
 
@@ -180,10 +185,14 @@ bool Notifier::sendTelegram(String jsonString) {
   http.end();
   
   if(httpCode > 0) {
+    #if defined(DEBUG) 
     Serial.println("✅ Telegram: Sent! Code: " + String(httpCode));
+    #endif
     return true;
   } else {
+    #if defined(DEBUG) 
     Serial.println("❌ Telegram: Failed! Code: " + String(httpCode));
+    #endif
     return false;
   }
 }
@@ -208,10 +217,14 @@ bool Notifier::sendNtfy(String jsonString) {
   http.end();
   
   if(httpCode > 0) {
+    #if defined(DEBUG) 
     Serial.println("✅ Ntfy: Sent! Code: " + String(httpCode));
+    #endif
     return true;
   } else {
+    #if defined(DEBUG) 
     Serial.println("❌ Ntfy: Failed! Code: " + String(httpCode));
+    #endif
     return false;
   }
 }
