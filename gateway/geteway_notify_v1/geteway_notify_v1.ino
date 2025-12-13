@@ -14,9 +14,9 @@
 
 #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 
-#define RELAY1_PIN 16  //out put
-#define RELAY2_PIN 17  //out put
-#define LED_STATUS 18  //out put
+#define RELAY1_PIN 16  //out put Active LOW
+#define RELAY2_PIN 17  //out put Active LOW
+#define LED_STATUS 18  //out put Active HIGH
 #define CONFIG_PIN 19  //input pulll up
 #define TEST_PIN 23 //input pulll up
 #define TEST_PIN_SERIAL 26 //input pulll up
@@ -73,6 +73,8 @@ void processJson(String jsonString) {
   
   if (error) {
     digitalWrite(TEST_PIN_SERIAL, LOW);
+    digitalWrite(RELAY1_PIN, HIGH);
+    digitalWrite(RELAY2_PIN, HIGH);
     #if defined(DEBUG)
     Serial.println("JSON parse failed!");
     #endif
@@ -90,12 +92,35 @@ void processJson(String jsonString) {
   //   bool online = sensor["online"];
   //   // ... ทำอะไรต่อตามต้องการ
   // }
-  if((doc["alarm_count"] > 0) || (doc["offline_count"]) > 0){
+  #if defined(DEBUG)
+  Serial.print("***Alert count = ");
+  Serial.print((int)doc["alarm_count"]);
+  Serial.print(" | Offline count = ");
+  Serial.println((int)doc["offline_count"]);
+  if(dsiable_siren()){
+    Serial.println("🔕");
+  }else{
+    Serial.println("🔔");
+  }
+  #endif
+
+  if(((int)doc["alarm_count"] > 0) || ((int)doc["offline_count"]) > 0){    
+    if(dsiable_siren()){
+      digitalWrite(RELAY1_PIN, HIGH);
+      digitalWrite(RELAY2_PIN, HIGH);
+      #if defined(DEBUG)
+      Serial.println("🔕🔕");
+      #endif
+    }else{
+      digitalWrite(RELAY1_PIN, LOW);
+      digitalWrite(RELAY2_PIN, LOW);
+      #if defined(DEBUG)
+      Serial.println("🔔🔔");
+      #endif
+    }
+  }else{
     digitalWrite(RELAY1_PIN, HIGH);
     digitalWrite(RELAY2_PIN, HIGH);
-  }else{
-    digitalWrite(RELAY1_PIN, LOW);
-    digitalWrite(RELAY2_PIN, LOW);
   }
 }
 
@@ -109,7 +134,7 @@ void setup() {
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
-  // pinMode(CONFIG_PIN, INPUT_PULLUP);
+  pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT);
   pinMode(TEST_PIN_SERIAL, OUTPUT);
   pinMode(DISABLE_SIREN, INPUT);
@@ -142,8 +167,9 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     // LED_STATUS
     digitalWrite(LED_STATUS, LOW);
-    delay(200);
+    delay(50);
     digitalWrite(LED_STATUS, HIGH);
+    delay(50);
     #if defined(DEBUG)
     Serial.println("Connecting to WiFi...");
     #endif
@@ -205,6 +231,14 @@ void test_gw(){
   }
 }
 
+bool dsiable_siren(){  
+  if(digitalRead(DISABLE_SIREN) == LOW){    
+    return true;
+  }else{
+    return false;
+  }
+}
+
 void loop() { 
   test_gw(); 
   unsigned long currentMillis = millis();
@@ -213,8 +247,9 @@ void loop() {
   if (currentMillis - previousMillisUpdate >= intervalUpdate) {
     previousMillisUpdate = currentMillis;
     timeClient.update();
-    digitalWrite(RELAY1_PIN, HIGH);
-    digitalWrite(RELAY2_PIN, HIGH);
+    digitalWrite(TEST_PIN_SERIAL, HIGH); 
+    // digitalWrite(RELAY1_PIN, HIGH);
+    // digitalWrite(RELAY2_PIN, HIGH);
   }
   int currentHour = timeClient.getHours();
   if (currentHour != lastNotifiedHour) {

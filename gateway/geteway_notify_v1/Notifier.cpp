@@ -59,8 +59,14 @@ String Notifier::createDiscordMessage(String jsonString) {
   }
   
  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"]);
- message += "\n❌ *Offline:* " + String((int)doc["offline_count"]);
- message += "\n";
+ message += " ❌ *Offline:* " + String((int)doc["offline_count"]);
+ message += "\n🎁 ch=" + String(doc["ch"]) +" | mac=" + String(doc["mac"]);
+#if defined(DEBUG) 
+Serial.print("MAC = ");
+Serial.println(String(doc["mac"]));
+Serial.print("Channel = ");
+Serial.println(String(doc["ch"]));
+#endif
   
   return message;
 }
@@ -84,8 +90,14 @@ String Notifier::createTelegramMessage(String jsonString) {
     message += " | Uptime: " + String(uptime) + "s\n";
   }
   
-  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"] + "\n");
-  message += "❌ *Offline:* " + String((int)doc["offline_count"] + "\n");
+  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"] );
+  message += "❌ *Offline:* " + String((int)doc["offline_count"]);
+  message += "\n🎁 ch=" + String(doc["ch"]) +" | mac=" + String(doc["mac"]);
+
+  #if defined(DEBUG) 
+  Serial.print("MAC = ");
+  Serial.println(String(doc["mac"]));
+  #endif
   
   return message;
 }
@@ -109,8 +121,9 @@ String Notifier::createNtfyMessage(String jsonString) {
     message += " | Uptime: " + String(uptime) + "s\n";
   }
   
-  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"] + "\n");
-  message += "❌ *Offline:* " + String((int)doc["offline_count"] + "\n");
+  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"]);
+  message += "❌ *Offline:* " + String((int)doc["offline_count"]);
+  message += "\n🎁 ch=" + String(doc["ch"]) +" | mac=" + String(doc["mac"]);
   
   return message;
 }

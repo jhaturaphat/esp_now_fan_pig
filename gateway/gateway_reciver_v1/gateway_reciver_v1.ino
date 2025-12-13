@@ -10,9 +10,9 @@
 
 #define KID_PIN 34 //สำหรับป้องกันโปรแกรม
 
-#define RELAY1_PIN 16  //out put
-#define RELAY2_PIN 17  //out put
-#define LED_STATUS 18  //out put
+#define RELAY1_PIN 16  //out put put Active LOW
+#define RELAY2_PIN 17  //out put put Active LOW
+#define LED_STATUS 18  //out put Active HIGH
 #define CONFIG_PIN 19  //input pulll up
 #define TEST_PIN 23 //input pulll up
 #define TEST_PIN_SERIAL 26 //input pulll up
@@ -142,9 +142,23 @@ void sendSensorsData(){
   
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
+  doc["mac"] = WiFi.macAddress();
+  doc["ch"] = WiFi.channel();
   
   serializeJson(doc, Serial2);
   Serial2.print("\n");
+}
+
+String getInterfaceMacAddress(esp_mac_type_t interface) {
+
+    String mac = "";
+    unsigned char mac_base[6] = {0};
+    if (esp_read_mac(mac_base, interface) == ESP_OK) {
+        char buffer[18];  // 6*2 characters for hex + 5 characters for colons + 1 character for null terminator
+        sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X", mac_base[0], mac_base[1], mac_base[2], mac_base[3], mac_base[4], mac_base[5]);
+        mac = buffer;
+    }
+    return mac;
 }
 
 void blinkLED(){
@@ -279,6 +293,7 @@ void test_gw(){
 }
 
 bool dsiable_siren(){
+  delay(10);
   if(digitalRead(DISABLE_SIREN) == LOW){
     return true;
   }else{

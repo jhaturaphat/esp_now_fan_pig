@@ -9,7 +9,7 @@
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // --- โครงสร้างข้อมูลสำหรับเก็บการตั้งค่า ---
 struct DeviceConfig {    
-    uint8_t channel = 1;    
+    uint8_t channel = 1;      
 };
 
 // --- HTML Template (อยู่นอกคลาส) ---
@@ -169,7 +169,7 @@ private:
             String chStr = request->getParam(PARAM_CH, true)->value();
             uint16_t ch = chStr.toInt();
             if(ch >= 1 && ch <= MAX_CH) {
-                this->currentConfig.channel = (uint8_t)ch;
+                this->currentConfig.channel = (uint8_t)ch;                
             } else {
                 msg = "Invalid ID! Must be 1-"+MAX_CH; 
                 valid = false;
@@ -234,8 +234,7 @@ public:
         pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
         delay(500); 
 
-        bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
-        
+        bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);        
         // 2. โหลดค่า
         EEPROM.get(0, currentConfig);
 
@@ -252,7 +251,7 @@ public:
         // 4. โหมดทำงานปกติ
         #if defined(DEBUG)
         Serial.print("ConfigManager: Normal Operation (ID: "); 
-        Serial.print(currentConfig.channel);
+        Serial.print(currentConfig.channel);        
         Serial.println(")");
         #endif
         

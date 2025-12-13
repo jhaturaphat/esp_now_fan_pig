@@ -11,7 +11,7 @@
 #include <ArduinoJson.h>
 
 
-#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+//#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // กำหนด PIN
 #define BUZZER_PIN18  18       // Buzzer สำหรับแจ้งเตือนขาดการสื่อสาร
 #define SIREN_PIN19 19        // Siren สำหรับแจ้งเตือนหลัก
@@ -361,7 +361,9 @@ void handleComunicationAlarms(){
     mySerial.println(getSystemStatus());   
     digitalWrite(SIREN_PIN19, LOW);  //แจ้งเตือน Siren Active LOW
     // digitalWrite(BUZZER_PIN18, HIGH);  
+    #if defined(DEBUG)
     Serial.println("🚨 BUZZER ACTIVATED! 🚨");  
+    #endif
   }else{
     digitalWrite(SIREN_PIN19, HIGH);
     // digitalWrite(BUZZER_PIN18, LOW);
