@@ -7,7 +7,7 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
-#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 struct ConfigWiFi {
   char* ssid = nullptr;
@@ -213,7 +213,7 @@ void readFile(fs::FS &fs, const char * path) {
    
     WiFi.setSleep(0);
     WiFi.mode(WIFI_AP);
-    String apName = "🛜SETUP_GW-"+ chipID();
+    String apName = "📲SETUP_GW-"+ chipID();
     WiFi.softAP(apName.c_str(),"", 1, 0, 4); // ช่อง 1, จำกัด 4 อุปกรณ์
     delay(50); //หน่วงเวลา 100 ms เพื่อให้ AP เริ่มทำงาน
 

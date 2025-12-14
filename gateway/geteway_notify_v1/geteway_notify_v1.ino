@@ -10,7 +10,7 @@
 #include "Notifier.h"
 
 
-#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 

@@ -2,7 +2,7 @@
 
 #include "Notifier.h"
 
-#define DEBUG
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 
 Notifier::Notifier() {
   discord_enabled = false;
