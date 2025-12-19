@@ -43,7 +43,7 @@ String Notifier::createDiscordMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🐷🐓Sensors Status Report**\n\n";
+  String message = "**🤖🐷🐓Sensors Status Report**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -52,7 +52,7 @@ String Notifier::createDiscordMessage(String jsonString) {
     bool switch_state = sensor["switch"];
     unsigned long uptime = sensor["uptime"];   
     
-    message += String(id) + ": ";
+    message += "🤖"+ String(id) + ": ";
     message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE" ;
     message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
@@ -75,7 +75,7 @@ String Notifier::createTelegramMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🐷🐓Sensors Status Report**\n\n";
+  String message = "**🤖🐷🐓Sensors Status Report**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -84,7 +84,7 @@ String Notifier::createTelegramMessage(String jsonString) {
     bool switch_state = sensor["switch"];
     unsigned long uptime = sensor["uptime"];
     
-    message += "*Sensor " + String(id) + ":* ";
+    message += "🤖"+ String(id) + ":* ";
     message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE";
     message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
@@ -106,16 +106,17 @@ String Notifier::createNtfyMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🐷🐓Sensors Status Report**\n";
+  String message = "**🤖🐷🐓Sensors Status Report**\n";
   
   JsonArray sensors = doc["sensors"];
+  
   for (JsonObject sensor : sensors) {
     int id = sensor["id"];
     bool online = sensor["online"];
     bool switch_state = sensor["switch"];
     unsigned long uptime = sensor["uptime"];
     
-    message += "Sensor " + String(id) + ": ";
+    message += "🤖"+ String(id) + ": ";
     message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE";
     message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
     message += " | Uptime: " + String(uptime) + "s\n";
