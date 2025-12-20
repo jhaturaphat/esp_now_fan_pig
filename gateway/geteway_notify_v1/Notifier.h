@@ -14,6 +14,7 @@ private:
   String telegram_chat_id;
   String ntfy_server;
   String ntfy_topic;
+  String location = "โปรดระบุ";
   
   bool discord_enabled;
   bool telegram_enabled;
@@ -26,6 +27,8 @@ private:
   
 public:
   Notifier();
+
+  void setLocation(String msg);
   
   // ตั้งค่า Discord
   void setupDiscord(String webhook);

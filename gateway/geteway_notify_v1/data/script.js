@@ -2,7 +2,8 @@ let playload = {
   url:"",
   channel:"",
   type: 1,
-  interval: 4
+  interval: 4,
+  location: "โปรดระบุ"
 };
 
 function saveWificfg() {
@@ -41,12 +42,14 @@ function saveNotifycfg() {
       // 1 = ntfy, 2 = telegram, 3 = discord
       switch (radio.id) {
         case "ntfy":
+          playload.location = (document.getElementById("location").value).trim();
           playload.url = (document.getElementById("topic").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
         break;
         case "telegram":
+          playload.location = (document.getElementById("location").value).trim();
           playload.url = (document.getElementById("telegram_token").value).trim();
           playload.channel = (document.getElementById("telegram_channel").value).trim();
           playload.type = parseInt(radio.value); 
@@ -54,6 +57,7 @@ function saveNotifycfg() {
           sendConfigNotify(playload);
         break;
         case "discord":
+          playload.location = (document.getElementById("location").value).trim();
           playload.url = (document.getElementById("discord_webhook").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
@@ -101,8 +105,7 @@ radioButtons.forEach((radio) => {
           break;
         case "telegram":
           document.getElementsByClassName("ntfy")[0].style.display = "none";
-          document.getElementsByClassName("telegram")[0].style.display =
-            "inline";
+          document.getElementsByClassName("telegram")[0].style.display = "inline";
           document.getElementsByClassName("discord")[0].style.display = "none";
           document.getElementById("btnSaveNotify").style.display = "inline";
           document.getElementById("notify-content").style.display = "block";
@@ -110,8 +113,7 @@ radioButtons.forEach((radio) => {
         case "discord":
           document.getElementsByClassName("ntfy")[0].style.display = "none";
           document.getElementsByClassName("telegram")[0].style.display = "none";
-          document.getElementsByClassName("discord")[0].style.display =
-            "inline";
+          document.getElementsByClassName("discord")[0].style.display = "inline";
           document.getElementById("btnSaveNotify").style.display = "inline";
           document.getElementById("notify-content").style.display = "block";
           break;

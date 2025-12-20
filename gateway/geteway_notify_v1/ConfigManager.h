@@ -25,6 +25,7 @@ struct ConfigNotify {
   char* channel = nullptr;
   uint8_t type = 1;
   uint8_t interval = 6;
+  char* location = nullptr;
 };
 
 class ConfigManager {
@@ -125,6 +126,7 @@ bool loadConfigNotify() const{
     const char* _channel = doc["channel"];
     const uint8_t _type = doc["type"] | 0;
     const uint8_t _interval = doc["interval"] | 0;
+    const char* _location = doc["location"];
 
     //✅ ตรวจสอบว่าไม่เป็น NULL และไม่ใช่ string ว่าง
     if (_url == nullptr || _channel == nullptr) {
@@ -152,10 +154,16 @@ bool loadConfigNotify() const{
       free(configNotify.channel);
       configNotify.channel = nullptr;
     }
+    if (configNotify.location != nullptr) { 
+      free(configNotify.location);
+      configNotify.location = nullptr;
+    }
 
     // ทำ strdup เพื่อ copy string ไปยัง heap
     configNotify.url = strdup(_url);
     configNotify.channel = strdup(_channel);
+    configNotify.location = strdup(_location);
+
      #if defined(DEBUG)
     Serial.println("========copy string ไปยัง heap=======");
     Serial.printf("%s\n", configNotify.url);
@@ -174,6 +182,7 @@ bool loadConfigNotify() const{
     configNotify.interval = _interval;
 
     #if defined(DEBUG)
+    Serial.printf("Location: %s\n", configNotify.location);
     Serial.printf("Loaded URL: %s\n", configNotify.url);
     Serial.printf("Loaded CHANNEL: %s\n", configNotify.channel);
     Serial.printf("Loaded TYPE: %d\n", configNotify.type);
@@ -308,8 +317,6 @@ void readFile(fs::FS &fs, const char * path) {
     }
 
   });
-
-
 
   // รับ JSON ผ่าน POST
   server.on("/save_notify", HTTP_POST,[](AsyncWebServerRequest *request){

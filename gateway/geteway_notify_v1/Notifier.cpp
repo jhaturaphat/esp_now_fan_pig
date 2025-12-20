@@ -11,6 +11,10 @@ Notifier::Notifier() {
   ntfy_server = "https://ntfy.sh";
 }
 
+void Notifier::setLocation(String msg){
+    location = msg;
+}
+
 void Notifier::setupDiscord(String webhook) {
   discord_webhook = webhook;
   discord_enabled = true;
@@ -43,7 +47,8 @@ String Notifier::createDiscordMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🤖🐷🐓Sensors Status Report**\n\n";
+  String message = "**🐷🐓Sensors Status Report**\n";
+  message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -75,7 +80,8 @@ String Notifier::createTelegramMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🤖🐷🐓Sensors Status Report**\n\n";
+  String message = "**🐷🐓Sensors Status Report**\n";
+  message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
@@ -106,7 +112,8 @@ String Notifier::createNtfyMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🤖🐷🐓Sensors Status Report**\n";
+  String message = "**🐷🐓Sensors Status Report**\n";
+  message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];
   
@@ -223,9 +230,9 @@ bool Notifier::sendNtfy(String jsonString) {
   
   http.begin(url);
   http.addHeader("Content-Type", "text/plain");
-  http.addHeader("Title", "ESP32 Sensors Report");
+  // http.addHeader("Title", "ESP32 Sensors Report");
   http.addHeader("Priority", "default");
-  http.addHeader("Tags", "computer,sensors");
+  // http.addHeader("Tags", "computer,sensors");
   
   int httpCode = http.POST(message);
   http.end();
@@ -256,5 +263,6 @@ void Notifier::sendAll(String jsonString) {
   
   if(ntfy_enabled) {
     sendNtfy(jsonString);
+    delay(1000);
   }
 }

@@ -199,6 +199,7 @@ void setup() {
     Serial.println("---------------------------");     
   #endif
   NOTIFICATION_INTERVAL_HOURS = configNotify.interval;
+  notifier.setLocation(configNotify.location);
   // ตั้งค่า Notifier
   // 1 = ntfy, 2 = telegram, 3 = discord
   switch(configNotify.type){
