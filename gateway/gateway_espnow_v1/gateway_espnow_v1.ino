@@ -13,7 +13,8 @@
 #define RELAY1_PIN 16  //out put Active LOW
 #define RELAY2_PIN 17  //out put Active LOW
 #define LED_STATUS 18  //out put Active HIGH
-#define CONFIG_PIN 19  //input pulll up
+// #define CONFIG_PIN 19  //input pulll up
+#define CONFIG_PIN 0  //for Board 2xRlay
 #define TEST_PIN 23 //input pulll up
 #define TEST_PIN_SERIAL 26 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up

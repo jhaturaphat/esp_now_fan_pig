@@ -82,7 +82,7 @@ private:
     
     // ตัวแปรสำหรับจัดการการกระพริบ LED แบบ non-blocking
     unsigned long previousMillis = 0;
-    const long interval = 300; // ช่วงเวลา 300 มิลลิวินาที
+    const long interval = 80; // ช่วงเวลา 300 มิลลิวินาที
     bool ledState = LOW;
 
     // --- Private Methods ---
@@ -250,8 +250,7 @@ public:
         
         // 1. ตรวจสอบการกดสวิตช์เพื่อเข้าโหมดตั้งค่า
         pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
-        delay(500); 
-
+        delay(5000); 
         bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);        
         // 2. โหลดค่า
         EEPROM.get(0, currentConfig);

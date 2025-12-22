@@ -44,7 +44,7 @@ class ConfigManager {
 
   // ตัวแปรสำหรับจัดการการกระพริบ LED แบบ non-blocking
   unsigned long previousMillis = 0;
-  const long interval = 300; // ช่วงเวลา 300 มิลลิวินาที
+  const long interval = 100; // ช่วงเวลา 300 มิลลิวินาที
   bool ledState = LOW;
 
   String chipID() {
@@ -414,12 +414,10 @@ void readFile(fs::FS &fs, const char * path) {
         #endif
         return false;
       }
-      
-      pinMode(BUNTTON_PUSH, INPUT_PULLUP);        
-      delay(10);
+      pinMode(BUNTTON_PUSH, INPUT_PULLUP); 
+      delay(5000); 
       pinMode(LED_STATUS, OUTPUT);
-      digitalWrite(LED_STATUS, LOW);      
-      delay(1000);
+      digitalWrite(LED_STATUS, LOW); 
       if(digitalRead(BUNTTON_PUSH) == LOW){        
         enterConfigMode();        
       }
