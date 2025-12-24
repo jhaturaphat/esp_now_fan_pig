@@ -6,31 +6,19 @@
 
 // #define DEBUG  // เอาคอมเมนต์ออกเมิ่ออยู่ในโหมด DEBUG
 
-// #define MAX_SENSORS 10  ยกเลิกใช้
-
-//GPIO สำหรับ ESP32-Dev-Module, ESP-32U
+// ESP32 Relay x2 Module
 #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
-#define RELAY1_PIN 16  //out put Active LOW
-#define RELAY2_PIN 17  //out put Active LOW
-#define LED_STATUS 18  //out put Active HIGH
-#define CONFIG_PIN 19  //input pulll up
-#define TEST_PIN 23 //input pulll up
-#define TEST_PIN_SERIAL 26 //input pulll up
+#define RELAY1_PIN 17  //out put Active LOW
+#define RELAY2_PIN 16  //out put Active LOW
+#define LED_STATUS 23  //out put Active HIGH
+#define CONFIG_PIN 0  //input pulll up
+#define TEST_PIN 32 //input pulll up
+#define TEST_PIN_SERIAL 18 //input pulll up
 #define DISABLE_SIREN 25  //input pulll up
+#define RXD2 21  //สีส้ม
+#define TXD2 19  //ขาว-ส้ม
 
-// GPIO สำหรับ ESP32-S3-WROOM-1U-N8R2
-// Board ESP32S3 Dev Module
-// #define KID_BUG_PIN 6 //สำหรับป้องกันโปรแกรม
-// #define RELAY1_PIN 36  //out put Active LOW
-// #define RELAY2_PIN 37  //out put Active LOW
-// #define LED_STATUS 39  //out put Active HIGH
-// #define CONFIG_PIN 40  //input pulll up
-// #define TEST_PIN 1 //input pulll up
-// #define TEST_PIN_SERIAL 18 //input pulll up
-// #define DISABLE_SIREN 17  //input pulll up
 
-#define RXD2 32
-#define TXD2 33
 
 #define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
 #define TIMEOUT_SIREN 10000 // 10 วินาที timeout
@@ -181,7 +169,7 @@ String getInterfaceMacAddress(esp_mac_type_t interface) {
 }
 
 void blinkLED(){
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 10; i++){
     digitalWrite(LED_STATUS, HIGH);
     delay(100);
     digitalWrite(LED_STATUS, LOW);
@@ -296,12 +284,13 @@ void setup() {
   }
 
   blinkLED();
-
-  digitalWrite(RELAY1_PIN, LOW);
-  digitalWrite(RELAY2_PIN, LOW);
+  //Relay cctive HIGH
+  digitalWrite(RELAY1_PIN, HIGH);  
+  digitalWrite(RELAY2_PIN, HIGH);
   delay(100);
-  digitalWrite(RELAY1_PIN, HIGH); 
-  digitalWrite(RELAY2_PIN, HIGH);  
+  digitalWrite(RELAY1_PIN, LOW); 
+  digitalWrite(RELAY2_PIN, LOW);  
+  
 
 }
 
@@ -323,7 +312,7 @@ void test_gw(){
 
 
 void loop() {
-  
+  //Relay cctive HIGH
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
 
   #if defined(DEBUG)
@@ -346,14 +335,14 @@ void loop() {
   // if((alarm_count > 0) || (offline_count > 0) || (offline_count >= MAX_SENSORS)){
     if((alarm_count > 0) || (offline_count > 0)){
     if(disableSiren){ //หากต้องการปิด siren
-      digitalWrite(RELAY1_PIN, HIGH);
-      digitalWrite(RELAY2_PIN, HIGH);
+      digitalWrite(RELAY1_PIN, LOW);
+      digitalWrite(RELAY2_PIN, LOW);
       #if defined(DEBUG)
       Serial.println("Relay OFF");
       #endif
     }else{
-      digitalWrite(RELAY1_PIN, LOW);
-      digitalWrite(RELAY2_PIN, LOW);
+      digitalWrite(RELAY1_PIN, HIGH);
+      digitalWrite(RELAY2_PIN, HIGH);
       #if defined(DEBUG)
       Serial.println("Relay Active🚨");
       #endif       
@@ -367,13 +356,15 @@ void loop() {
       handleAlarm = true;
       sendSensorsData();    
     }
+
   }else{
+    // ส่งแจ้งสถานะปกติ 1 ครั้ง หลังจากมี Alarm เกิดขึ้น
     if(handleAlarm && (alarm_count == 0)){
       handleAlarm = false;
       sendSensorsData(); 
     }
-    digitalWrite(RELAY1_PIN, HIGH);     
-    digitalWrite(RELAY2_PIN, HIGH);     
+    digitalWrite(RELAY1_PIN, LOW);     
+    digitalWrite(RELAY2_PIN, LOW);     
   }
   // ---------------------------------------------------------------------------------
   // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ

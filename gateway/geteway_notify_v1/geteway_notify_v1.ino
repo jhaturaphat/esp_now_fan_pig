@@ -1,5 +1,5 @@
 // 1 = ntfy, 2 = telegram, 3 = discord
-
+// #include <HardwareSerial.h>
 #include "ConfigManager.h"
 #include <WiFi.h>
 // #include <HTTPClient.h>
@@ -36,7 +36,7 @@
 // กำหนดค่าให้สลับกันกับ ตัวส่ง 
 #define RXD2 33
 #define TXD2 32
-
+// HardwareSerial Serial2(2); 
 
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;

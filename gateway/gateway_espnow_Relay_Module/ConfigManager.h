@@ -64,7 +64,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 class ConfigManager {
 private:
     
-    const int LED_PIN = 18;           // GPIO2: Output (LED status)
+    const int LED_PIN = 23;         
     const int EEPROM_SIZE = sizeof(DeviceConfig);
 
     // --- Web Server Objects ---    
@@ -250,7 +250,7 @@ public:
         
         // 1. ตรวจสอบการกดสวิตช์เพื่อเข้าโหมดตั้งค่า
         pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
-        delay(500); 
+        delay(5000); 
 
         bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);        
         // 2. โหลดค่า
