@@ -1,5 +1,5 @@
 /*
-Future BOX FB12
+Future BOX FB12 + ESP-01s
 https://easyeda.com/editor#id=c7245d4e303c4946be1aa8df7e19e6da|8ff0f60a614a4b55ace3a2a8d3f7e9fd|8b1b3ca6d1164febb14547686424542b|36900463ee184503a31e06a342c9d34d
  */
   #include "ConfigManager.h"
@@ -64,6 +64,7 @@ void setup() {
   // กำหนด PIN Mode
   pinMode(REED_SWITCH_PIN, INPUT_PULLUP);  // GPIO3 (RXD) สำหรับ reed switch
   pinMode(STATUS_LED_PIN, OUTPUT);         // GPIO2 สำหรับ LED
+  pinmode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
   
   // แสดงสถานะเริ่มต้น
   digitalWrite(STATUS_LED_PIN, LOW);
@@ -126,6 +127,9 @@ void setup() {
 }
 
 void loop() {
+
+  bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
+  if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
 
   // อ่านสถานะ switch
   bool current_switch_state = digitalRead(REED_SWITCH_PIN);
