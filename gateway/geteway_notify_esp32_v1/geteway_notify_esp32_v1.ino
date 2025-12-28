@@ -53,6 +53,7 @@ const long intervalUpdate = 60000;
 int ledState = LOW;             // ledState used to set the LED
 long previousMillisLED = 0;        // will store last time LED was updated
 long intervalLED = 500;  
+
 // ----------------------------------------------------
 ConfigManager configManager;
 ConfigWiFi configWiFi;
@@ -80,10 +81,13 @@ void receiveData() {
 void processJson(String jsonString) {
   digitalWrite(TEST_PIN_SERIAL, HIGH);
   StaticJsonDocument<1024> doc;
+  #if defined(DEBUG)
+    Serial.println(jsonString);
+  #endif
   DeserializationError error = deserializeJson(doc, jsonString);
   
   if (error) {
-    digitalWrite(TEST_PIN_SERIAL, LOW);
+    // digitalWrite(TEST_PIN_SERIAL, LOW);
     digitalWrite(RELAY1_PIN, HIGH);
     digitalWrite(RELAY2_PIN, HIGH);
     #if defined(DEBUG)

@@ -316,8 +316,10 @@ void loop() {
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
 
   #if defined(DEBUG)
-  Serial.print("Switch Disable Siren State = ");
-  Serial.println(disableSiren);
+  if(disableSiren){
+    Serial.print("Switch Disable Siren State = ");
+    Serial.println(disableSiren);
+  }
   #endif
 
   checkSensorsCommunication();
