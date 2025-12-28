@@ -238,6 +238,7 @@ void setup() {
 
   // เริ่มต้น NTP Client
   timeClient.begin();
+  digitalWrite(TEST_PIN_SERIAL, LOW);
 
 }
 
