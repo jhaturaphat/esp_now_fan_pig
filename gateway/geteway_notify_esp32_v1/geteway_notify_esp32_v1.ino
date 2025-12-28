@@ -15,8 +15,8 @@
 #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 #define RELAY1_PIN 16  //out put Active LOW
 #define RELAY2_PIN 17  //out put Active LOW
-#define LED_STATUS 18  //out put Active HIGH
-// #define CONFIG_PIN 19  //input pulll up
+#define LED_STATUS 19  //out put Active HIGH
+// #define CONFIG_PIN 0  //input pulll up
 #define CONFIG_PIN 0  //for Board 2xRlay
 #define TEST_PIN 23 //input pulll up
 #define TEST_PIN_SERIAL 26 //input pulll up
@@ -28,7 +28,7 @@
 // #define RELAY1_PIN 36  //out put Active LOW
 // #define RELAY2_PIN 37  //out put Active LOW
 // #define LED_STATUS 39  //out put Active HIGH
-// #define CONFIG_PIN 40  //input pulll up
+// #define CONFIG_PIN 0  //input pulll up
 // #define TEST_PIN 1 //input pulll up
 // #define TEST_PIN_SERIAL 18 //input pulll up
 // #define DISABLE_SIREN 17  //input pulll up
@@ -148,11 +148,11 @@ void setup() {
   // pinMode(CONFIG_PIN, INPUT_PULLUP);  
   pinMode(TEST_PIN_SERIAL, OUTPUT);
   // สำหรับ ESP32 PCL
-  pinMode(TEST_PIN, INPUT);
-  pinMode(DISABLE_SIREN, INPUT);
+  // pinMode(TEST_PIN, INPUT);
+  // pinMode(DISABLE_SIREN, INPUT);
   // สำหรับ ESP32 Devkit
-  // pinMode(TEST_PIN, INPUT_PULLUP);
-  // pinMode(DISABLE_SIREN, INPUT_PULLUP);
+  pinMode(TEST_PIN, INPUT_PULLUP);
+  pinMode(DISABLE_SIREN, INPUT_PULLUP);
   
   if(!configManager.begin(CONFIG_PIN)){
     // ❌ ถ้าโหลดไม่สำเร็จ
@@ -269,7 +269,7 @@ void loop() {
   }
   int currentHour = timeClient.getHours();
   if (currentHour != lastNotifiedHour) {
-    if (currentHour % NOTIFICATION_INTERVAL_HOURS == 0) {      
+    if ((currentHour % NOTIFICATION_INTERVAL_HOURS) == 0) {      
       // *** ใส่โค้ดแจ้งเตือนของคุณที่นี่ ***      
       digitalWrite(TEST_PIN_SERIAL, LOW);     
       lastNotifiedHour = currentHour;

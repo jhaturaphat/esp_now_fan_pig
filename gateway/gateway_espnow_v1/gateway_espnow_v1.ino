@@ -243,8 +243,8 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
   // pinMode(CONFIG_PIN, INPUT_PULLUP);
-  pinMode(TEST_PIN, INPUT);
-  pinMode(TEST_PIN_SERIAL, INPUT);
+  pinMode(TEST_PIN, INPUT_PULLUP);
+  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
   pinMode(DISABLE_SIREN, INPUT_PULLUP);
 
   cfgManager.begin(CONFIG_PIN); 
