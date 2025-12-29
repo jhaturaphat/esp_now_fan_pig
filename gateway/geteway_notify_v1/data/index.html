@@ -11,8 +11,13 @@
     <div class="content">
       <div class="form-group">
         <label for="wifi_ssid">ชื่อ Wifi 🕵🏻</label>
-        <input type="text" id="wifi_ssid" />
+        <!-- เชื่อม input กับ datalist ด้วย list="wifi_list" -->
+        <input type="text" id="wifi_ssid" list="wifi_list" onfocus="fetchWifiList()" placeholder="คลิกเพื่อค้นหา WiFi..." />
+        <datalist id="wifi_list">
+          <option value="กำลังค้นหา...">
+        </datalist>
       </div>
+      
       <div class="form-group">
         <label for="wifi_password">รหัส Wifi 🔢</label>
         <input type="text" id="wifi_password" />

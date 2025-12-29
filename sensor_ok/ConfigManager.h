@@ -38,11 +38,10 @@ const char index_html[] PROGMEM = R"rawliteral(
     <input type="number" id="channel" name="channel" min="1" max="13" value="%CH_VALUE%" placeholder="1-13" required>
     <label for="mac">Gateway MAC (1F:2F:3F:4F:5F:6F):</label>
     <input type="text" id="mac" name="mac" pattern="[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}" value="%MAC_VALUE%" required>
-    <input type="submit" value="Save & Restart" class="btn">
+    <input type="submit" value="💾 Save" class="btn">    
     </form>
-    <div id="message" class="message"></div>
-    <div>Copyright by Mr.Jaturapat Siriboon</div>
-    </div>
+    <div id="message" class="message"></div><div><button class="btn" onclick="Reload()" style="width:100%">🔴 Restart</button></div>
+    <div>Copyright by Mr.Jaturapat Siriboon</div></div>
     <script>
     function trimInputs(){
     let id=document.getElementById('id');
@@ -58,7 +57,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     try{let r=await fetch('/save',{method:'POST',body:d});
     if(r.ok){m.textContent='Saved successfully!';m.className='message success';}
     else{let t=await r.text();m.textContent='Error: '+t;m.className='message error';}
-    }catch(e){m.textContent='Error: Failed to connect to server';m.className='message error';}}
+    }catch(e){m.textContent='Error: Failed to connect to server';m.className='message error';}}    
+    function Reload() {fetch("/reload");}
     </script></body></html>
 
 )rawliteral";
@@ -147,6 +147,9 @@ private:
         }
 
         // --- Web Server Routes ---
+      server.on("/reload", HTTP_GET,[](AsyncWebServerRequest *request){
+        ESP.restart();
+      });
         // หน้าหลัก (แสดงฟอร์ม)
       server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request){
         String html = index_html; // ดึงจาก PROGMEM
@@ -263,7 +266,7 @@ public:
         
         // 1. ตรวจสอบการกดสวิตช์เพื่อเข้าโหมดตั้งค่า
         pinMode(PIN_CONFIG, INPUT_PULLUP); // GPIO0 must be HIGH for normal boot
-        delay(100); 
+        delay(5000); //รอผู้ใช้กดปุ่มเพื่อตั้งค่า
 
         bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
         
@@ -291,8 +294,8 @@ public:
         Serial.println(")");
         #endif
         
-        // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
-        pinMode(PIN_CONFIG, INPUT); 
+        // // ถอดขา GPIO0 ออกจาก INPUT_PULLUP เมื่อเข้าสู่โหมดทำงานปกติ
+        // pinMode(PIN_CONFIG, INPUT); 
         
         return true; // สำเร็จ (เข้าสู่ Normal Mode)
     }

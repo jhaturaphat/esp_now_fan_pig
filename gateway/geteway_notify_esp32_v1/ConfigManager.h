@@ -216,6 +216,7 @@ void readFile(fs::FS &fs, const char * path) {
   file.close();
 }
 #endif
+
   // Start Web Server
   void enterConfigMode() {
     // Initialize LittleFS
@@ -376,6 +377,33 @@ void readFile(fs::FS &fs, const char * path) {
       request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to write file\"}");
       return;
     }
+  });
+
+server.on("/getWifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+    
+    // สร้างตัวแปรส่งคำตอบกลับในรูปแบบ JSON
+    AsyncJsonResponse *response = new AsyncJsonResponse(true); // true = เป็น Array
+    JsonArray root = response->getRoot().as<JsonArray>();
+
+    // เริ่มทำการสแกน WiFi
+    int n = WiFi.scanNetworks(false, false, false, 300);
+
+    if (n > 0) {
+      for (int i = 0; i < n; ++i) {
+        JsonObject network = root.add<JsonObject>();
+        network["id"] = i + 1;
+        network["ssid"] = WiFi.SSID(i);
+        network["rssi"] = WiFi.RSSI(i);
+        network["encryption"] = (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? "open" : "secured";
+      }
+    }
+
+    // ลบผลการสแกนออกจาก Memory
+    WiFi.scanDelete();
+
+    // ส่งคำตอบกลับไปหา Client
+    response->setLength();
+    request->send(response);
   });
 
   server.on("/reset", HTTP_GET,[](AsyncWebServerRequest *request){

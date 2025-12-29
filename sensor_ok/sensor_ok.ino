@@ -50,8 +50,7 @@ void setup() {
   #endif
   // เรียกใช้เมธอด begin()
   // begin() จะตรวจสอบสวิตช์และค่าใน EEPROM
-  // ถ้าจำเป็น มันจะรัน Web Server และไม่กลับมาจนกว่าจะรีสตาร์ท
-  delay(5000); //รอผู้ใช้กดปุ่มเพื่อตั้งค่า
+  // ถ้าจำเป็น มันจะรัน Web Server และไม่กลับมาจนกว่าจะรีสตาร์ท  
   cfgManager.begin(CONFIG_BUTTON_PIN);  
   // เมื่อโค้ดมาถึงตรงนี้ หมายความว่า ESP ได้เข้าสู่ Normal Operation Mode แล้ว
   #if defined(DEBUG)
@@ -64,7 +63,7 @@ void setup() {
   // กำหนด PIN Mode
   pinMode(REED_SWITCH_PIN, INPUT_PULLUP);  // GPIO3 (RXD) สำหรับ reed switch
   pinMode(STATUS_LED_PIN, OUTPUT);         // GPIO2 สำหรับ LED
-  pinmode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
   
   // แสดงสถานะเริ่มต้น
   digitalWrite(STATUS_LED_PIN, LOW);
@@ -128,7 +127,7 @@ void setup() {
 
 void loop() {
 
-  bool switchPressed = (digitalRead(PIN_CONFIG) == LOW);
+  bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
   if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
 
   // อ่านสถานะ switch

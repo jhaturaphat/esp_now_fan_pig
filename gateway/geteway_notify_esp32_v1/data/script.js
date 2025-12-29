@@ -158,3 +158,41 @@ function ReloadWithCountdown() {
   // เริ่มการนับถอยหลัง
   countdown();
 }
+
+
+let isScanning = false; // ตัวแปรป้องกันการสแกนซ้ำซ้อนขณะกำลังดึงข้อมูล
+
+function fetchWifiList() {
+  const dataList = document.getElementById('wifi_list');
+  
+  // ถ้ากำลังสแกนอยู่ ให้หยุดการทำงาน (ป้องกันการรัว API)
+  if (isScanning) return;
+  
+  isScanning = true;
+  dataList.innerHTML = '<option value="กำลังค้นหา WiFi...">';
+
+  fetch('/getWifi')
+    .then(response => response.json())
+    .then(data => {
+      dataList.innerHTML = ''; // ล้างค่า "กำลังค้นหา" ออก
+      
+      if (data.length === 0) {
+        dataList.innerHTML = '<option value="ไม่พบสัญญาณ WiFi">';
+      } else {
+        data.forEach(net => {
+          // สร้างตัวเลือกจากรายการ WiFi ที่สแกนได้
+          const option = document.createElement('option');
+          option.value = net.ssid;
+          // แสดงความแรงสัญญาณ (RSSI) กำกับไว้ข้างๆ เพื่อช่วยตัดสินใจ
+          option.textContent = `${net.ssid} (${net.rssi} dBm)`; 
+          dataList.appendChild(option);
+        });
+      }
+      isScanning = false;
+    })
+    .catch(err => {
+      console.error('Error fetching WiFi:', err);
+      dataList.innerHTML = '<option value="เกิดข้อผิดพลาดในการโหลด">';
+      isScanning = false;
+    });
+}
