@@ -31,6 +31,7 @@ unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็�
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 bool handleAlarm = false; 
+bool reload = true;
 // ประกาศตัวแปร global สำหรับ LED Status
 unsigned long led_blink_start = 0;
 const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
@@ -60,7 +61,7 @@ int offline_count = 0;
 int alarm_count = 0;
 // ตัวแปร Timeout
 unsigned long sirenStartTime = 0;
-bool sirenOn  = false; // สถานะไซเรนว่ากำลังดังอยู่หรือไม่
+// bool sirenOn  = false; // สถานะไซเรนว่ากำลังดังอยู่หรือไม่
 
 // 1. สร้าง Object ของ ConfigManager
 ConfigManager cfgManager;
@@ -311,7 +312,7 @@ void test_gw(){
 // }
 
 
-void loop() {
+void loop() {  
   //Relay cctive HIGH
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
 
@@ -333,8 +334,7 @@ void loop() {
     digitalWrite(LED_STATUS, LOW);
     led_blink_start = 0; // reset
   }
-  // ----------------------------------------------------------------------------------
-  // if((alarm_count > 0) || (offline_count > 0) || (offline_count >= MAX_SENSORS)){
+  // ----------------------------------------------------------------------------------  
     if((alarm_count > 0) || (offline_count > 0)){
     if(disableSiren){ //หากต้องการปิด siren
       digitalWrite(RELAY1_PIN, LOW);
@@ -356,13 +356,17 @@ void loop() {
       Serial.printf("แจ้งเตือน %d 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n", alarm_count);
       #endif  
       handleAlarm = true;
-      sendSensorsData();    
+      sendSensorsData(); 
     }
 
   }else{
     // ส่งแจ้งสถานะปกติ 1 ครั้ง หลังจากมี Alarm เกิดขึ้น
     if(handleAlarm && (alarm_count == 0)){
-      handleAlarm = false;
+      handleAlarm = !handleAlarm;
+      sendSensorsData(); 
+    }
+    if(reload){
+      reload = !reload;
       sendSensorsData(); 
     }
     digitalWrite(RELAY1_PIN, LOW);     

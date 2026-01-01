@@ -4,7 +4,7 @@
 #include <DNSServer.h>
 #include <ESP8266mDNS.h> // เพิ่มไลบรารี mDNS
 
-#define MAX_ID 10
+#define MAX_ID 20
 #define MAX_CH 13
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // --- โครงสร้างข้อมูลสำหรับเก็บการตั้งค่า ---
@@ -31,16 +31,16 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style></head><body>
     <h1>Sensor Config</h1>
     <div class="container">
-    <form id="configForm" onsubmit="submitForm(event)">
+    <form id="configForm" onsubmit="submitForm(event)">f:\Develooper\Arduino\esp_now_fan_pig\gateway\gateway_espnow_Relay_Module\gateway_espnow_Relay_Module.ino
     <label for="id">Sensor ID (1-10):</label>
-    <input type="number" id="id" name="id" min="1" max="10" value="%ID_VALUE%" placeholder="1-10" required>
+    <input type="number" id="id" name="id" min="1" max="20" value="%ID_VALUE%" placeholder="1-20" required>
     <label for="ch">Channel ID (1-13):</label>
     <input type="number" id="channel" name="channel" min="1" max="13" value="%CH_VALUE%" placeholder="1-13" required>
     <label for="mac">Gateway MAC (1F:2F:3F:4F:5F:6F):</label>
     <input type="text" id="mac" name="mac" pattern="[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}" value="%MAC_VALUE%" required>
-    <input type="submit" value="💾 Save" class="btn">    
+    <input type="submit" value="Save" class="btn">    
     </form>
-    <div id="message" class="message"></div><div><button class="btn" onclick="Reload()" style="width:100%">🔴 Restart</button></div>
+    <div id="message" class="message"></div><div><button class="btn" onclick="Reload()" style="width:100%">Restart</button></div>
     <div>Copyright by Mr.Jaturapat Siriboon</div></div>
     <script>
     function trimInputs(){
@@ -129,7 +129,7 @@ private:
         WiFi.setSleep(false);
         system_update_cpu_freq(160);
 
-        String apName = "🖥️SETUP-" + chipID();         
+        String apName = "🛜SETUP-" + chipID();         
         
         // WiFi.mode(WIFI_AP_STA);
         WiFi.softAP(apName.c_str(),"", 1, 0, 4); // ช่อง 1, จำกัด 4 อุปกรณ์
@@ -193,7 +193,7 @@ private:
                 if(id >= 1 && id <= MAX_ID) {
                     this->currentConfig.deviceID = (uint8_t)id;
                 } else {
-                    msg = "Invalid ID! Must be 1-"+MAX_ID; 
+                    msg = "MAX ID must be 1-"+MAX_ID; 
                     valid = false;
                 }
             } else { valid = false; }
