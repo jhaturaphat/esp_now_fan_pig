@@ -48,15 +48,21 @@
       <!-- ntfy.sh -->
       <div class="ntfy" style="display: none">
         <div class="form-group">
-          <label for="topic">🦕Topic </label>
-          <input type="text" id="topic" placeholder="https://ntfy.sh/mytopic" />
+          <label for="topic">🦕Topic</label>
+          <input type="text" id="topic" list="webapi" placeholder="https://ntfy.sh/mytopic" />
+          <datalist id="webapi">
+            <option value="https://ntfy.sh/">
+          </datalist>
         </div>
       </div>
       <!-- Telegram -->
       <div class="telegram" style="display: none">
         <div class="form-group">
           <label for="telegram_token">🗝️Telegram Token </label>
-          <input type="text" id="telegram_token" placeholder="8099954188:AAGYPRNbmwzUVgmVVERNDj9z2OONFcuwX6w"/>
+          <input type="text" id="telegram_token" list="telegram_list" placeholder="https://api.telegram.org/bot<YOUR_BOT_TOKEN>"/>
+          <datalist id="telegram_list">
+            <option value="https://api.telegram.org/bot">
+          </datalist>
         </div>
         <div class="form-group">
           <label for="telegram_channel">📻Telegram Chanel</label>
@@ -71,9 +77,14 @@
             type="text"
             id="discord_webhook"
             placeholder="https://discord.com/api/webhooks/1427287898759368744/pQCXfltKyhnN_rASeL4Jt-G2FGqFim8USSBepLEn0mDP7LAyFVhvV8diZkdH_Pco9ZB0"
+            list="discord_list"
           />
         </div>
+        <datalist id="discord_list">
+          <option value="https://discord.com/api/webhooks/">
+        </datalist>
       </div>
+      <!-- แจ้งเตือน ทุกๆ ? ชม. -->
       <div class="shcedule">
         <div class="form-group">
           <label for="schedule">🕒แจ้งเตือน ทุกๆ ? ชม.</label>

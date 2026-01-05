@@ -240,6 +240,8 @@ void readFile(fs::FS &fs, const char * path) {
         #endif
     }
 
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+
     server.on("/", HTTP_GET,[](AsyncWebServerRequest * request) {
       request->send(LittleFS, "/index.html", "text/html");
     });
@@ -379,7 +381,8 @@ void readFile(fs::FS &fs, const char * path) {
       }
     });
 
-    server.on("/getWifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server.on("/getWifiList", HTTP_GET, [](AsyncWebServerRequest *request) {
+
         
         // สร้างตัวแปรส่งคำตอบกลับในรูปแบบ JSON
         AsyncJsonResponse *response = new AsyncJsonResponse(true); // true = เป็น Array

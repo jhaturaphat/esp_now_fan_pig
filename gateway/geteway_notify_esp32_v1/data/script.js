@@ -1,3 +1,7 @@
+window.onload = function() {
+  fetchWifiList();
+};
+
 let playload = {
   url:"",
   channel:"",
@@ -163,15 +167,19 @@ function ReloadWithCountdown() {
 let isScanning = false; // ตัวแปรป้องกันการสแกนซ้ำซ้อนขณะกำลังดึงข้อมูล
 
 function fetchWifiList() {
-  const dataList = document.getElementById('wifi_list');
-  
+  const dataList = document.getElementById('wifi_list'); 
   // ถ้ากำลังสแกนอยู่ ให้หยุดการทำงาน (ป้องกันการรัว API)
   if (isScanning) return;
   
-  isScanning = true;
-  dataList.innerHTML = '<option value="กำลังค้นหา WiFi...">';
-
-  fetch('/getWifi')
+  if(dataList){
+    isScanning = true;
+    
+  }else{
+    console.error("ไม่พบ Element ที่มี id='wifi_list'");
+  }
+  
+  try {
+    fetch('/getWifiList')
     .then(response => response.json())
     .then(data => {
       dataList.innerHTML = ''; // ล้างค่า "กำลังค้นหา" ออก
@@ -195,4 +203,10 @@ function fetchWifiList() {
       dataList.innerHTML = '<option value="เกิดข้อผิดพลาดในการโหลด">';
       isScanning = false;
     });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    dataList.innerHTML = '<option value="เกิดข้อผิดพลาดในการค้นหา">';
+  } finally{
+    isScanning = false;
+  }
 }
