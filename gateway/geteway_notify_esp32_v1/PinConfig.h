@@ -24,6 +24,6 @@
 // #define DISABLE_SIREN 17  //input pulll up
 
 // กำหนดค่าให้สลับกันกับ ตัวส่ง 
-#define RXD2 33
-#define TXD2 32
+#define RXD2 33  //ขาว-ส้ม
+#define TXD2 32  //สีส้ม
 // HardwareSerial Serial2(2); 
