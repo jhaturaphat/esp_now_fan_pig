@@ -142,12 +142,12 @@ bool Notifier::sendDiscord(String jsonString) {
     return false;
   }
   
+  bool success = false;
   WiFiClientSecure client;
-  client.setInsecure(); // ไม่ตรวจสอบ SSL certificate (ใช้เฉพาะการทดสอบ)
+  client.setInsecure(); 
   HTTPClient http;
   
   String message = createDiscordMessage(jsonString);
-  
   StaticJsonDocument<2048> discordDoc;
   discordDoc["content"] = message;
   
@@ -160,26 +160,26 @@ bool Notifier::sendDiscord(String jsonString) {
   
     int httpCode = http.POST(payload);   
     
-    if(httpCode > 0) {
+    if(httpCode >= 200 && httpCode < 300) { // เช็คช่วง Success code (ปกติ Discord คือ 204)
       #if defined(DEBUG) 
       Serial.println("✅ Discord: Sent! Code: " + String(httpCode));
       #endif
-      return true;
+      success = true;
     } else {
       #if defined(DEBUG) 
       Serial.println("❌ Discord: Failed! Code: " + String(httpCode));
       #endif
-      return false;
+      success = false;
     }
-
-    http.end();
-
-  }else {
+    http.end(); // ปิดการเชื่อมต่อตรงนี้เพื่อให้ Resource ถูกคืนค่าแน่นอน
+  } else {
     #if defined(DEBUG) 
     Serial.println("Failed to begin HTTP connection");
     #endif
+    success = false;
   }
-  
+
+  return success; // คืนค่าครั้งเดียวที่ท้ายฟังก์ชัน
 }
 
 bool Notifier::sendTelegram(String jsonString) {
@@ -251,6 +251,7 @@ bool Notifier::sendNtfy(String jsonString) {
 }
 
 void Notifier::sendAll(String jsonString) {
+  int retry = 0;
   if(discord_enabled) {
     sendDiscord(jsonString);
     delay(1000);

@@ -13,6 +13,7 @@
 struct DeviceConfig {    
     uint8_t channel = 1;    //Default value 
     uint8_t sensor =  10;   //Default value 
+    uint8_t virtualMac[6];   //Mac
 };
 
 // --- HTML Template (อยู่นอกคลาส) ---
@@ -34,10 +35,12 @@ const char index_html[] PROGMEM = R"rawliteral(
     <h3>การกำหนดค่าเกตเวย์ตัวรับ</h3>
     <div class="container">
     <form id="configForm" onsubmit="submitForm(event)">
-    <label for="ch">Channel ID (1-13):</label>
+    <label for="ch">ตั้งค่าช่อง | Channel ID (1-13):</label>
     <input type="number" id="channel" name="channel" min="1" max="13" value="%CH_VALUE%" placeholder="1-13" required>    
     <label for="ch">จำนวนเซ็นเซอร์ | Number of sensors (1-20):</label>
-    <input type="number" id="sensor" name="sensor" min="1" max="20" value="%SENSOR_VALUE%" placeholder="1-20" required>    
+    <input type="number" id="sensor" name="sensor" min="1" max="20" value="%SENSOR_VALUE%" placeholder="1-20" required> 
+    <label for="ch">MAC ADDRESS </label>
+    <input type="text" id="mac" name="mac" value="%MAC_VALUE%" placeholder="FF:FF:FF:FF:FF:FF" required>   
     <input type="submit" value="Save & Restart" class="btn">
     </form>
     <div id="message" class="message"></div>
@@ -74,7 +77,7 @@ private:
     
     // const char* PARAM_ID = "id";
     const char* PARAM_CH = "channel";
-    // const char* PARAM_MAC = "mac";
+    const char* PARAM_MAC = "mac";
     const char* PARAM_SENSOR = "sensor";
 
     // --- ตัวแปรสำหรับเก็บค่า ---
@@ -126,6 +129,20 @@ private:
         return mac;
     }
 
+    String getVirtualMacAddress(){
+        String mac = "";
+        unsigned char mac_base[6] = {0};
+        if(currentConfig.virtualMac[0] != 0xFF){
+            char buffer[18];
+            sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X", 
+            currentConfig.virtualMac[0], currentConfig.virtualMac[1], currentConfig.virtualMac[2], 
+            currentConfig.virtualMac[3], currentConfig.virtualMac[4], currentConfig.virtualMac[5]);
+            mac = buffer;
+            return mac;
+        }
+        return getInterfaceMacAddress(ESP_MAC_WIFI_STA);
+    }
+
     // 4. โหมดตั้งค่า (รัน Web Server)
     void enterConfigMode() {   
            // Serial.println("\n*** ConfigManager: Entering Configuration Mode ***");        
@@ -161,6 +178,7 @@ private:
             html.replace("%CH_VALUE%", String(currentConfig.channel));
         }
             html.replace("%SENSOR_VALUE%", String(currentConfig.sensor));
+            html.replace("%MAC_VALUE%", getVirtualMacAddress());
             html.replace("%MAC_ADDR%", getInterfaceMacAddress(ESP_MAC_WIFI_STA));
 
             request->send(200, "text/html", html);
@@ -175,6 +193,7 @@ private:
         if(request->hasParam(PARAM_CH, true) && request->hasParam(PARAM_SENSOR, true) ){
             String chStr = request->getParam(PARAM_CH, true)->value();
             String sensorStr =  request->getParam(PARAM_SENSOR, true)->value();
+            String macStr = request->getParam(PARAM_MAC, true)->value();
             uint16_t ch = chStr.toInt();
             uint16_t sensor = sensorStr.toInt();
 
@@ -191,6 +210,11 @@ private:
                 msg = "Invalid ID! Must be 1-"+MAX_SENSOR; 
                 valid = false;
             }
+
+            // แปลง String เป็น Byte Array 
+            sscanf(macStr.c_str(), "%x:%x:%x:%x:%x:%x", 
+            &currentConfig.virtualMac[0], &currentConfig.virtualMac[1], &currentConfig.virtualMac[2], 
+            &currentConfig.virtualMac[3], &currentConfig.virtualMac[4], &currentConfig.virtualMac[5]);
 
         } else { valid = false; }
        
