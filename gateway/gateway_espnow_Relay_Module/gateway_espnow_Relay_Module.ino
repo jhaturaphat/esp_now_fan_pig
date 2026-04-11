@@ -150,8 +150,7 @@ void sendSensorsData(){
   
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
-  // doc["mac"] = WiFi.macAddress();
-  doc["mac"] = myConfig.virtualMac;
+  doc["mac"] = WiFi.macAddress();
   doc["ch"] = WiFi.channel();
   
   serializeJson(doc, Serial2);
@@ -236,6 +235,7 @@ void setup() {
    esp_wifi_set_mac(WIFI_IF_STA, myConfig.virtualMac);
   // -------------------------------------------------------------------------------
   WiFi.setSleep(false);  // ป้องกัน WiFi sleep สำหรับ ESP-NOW
+  WiFi.macAddress(myConfig.virtualMac); // กำหนด Mac address ใหม่
   
   MAX_SENSORS = myConfig.sensor;
   // กำหนด Channel

@@ -148,7 +148,8 @@ void sendSensorsData(){
   
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
-  doc["mac"] = WiFi.macAddress();
+  doc["mac"] = WiFi.macAddress(myConfig.virtualMac);
+  //  doc["mac"] = myConfig.virtualMac;
   doc["ch"] = WiFi.channel();
   
   serializeJson(doc, Serial2);
