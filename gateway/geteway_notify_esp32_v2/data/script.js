@@ -236,17 +236,17 @@ function getConfigNotify(){
         document.getElementById("location").value = data.location;  
         document.getElementById("schedule").value = data.interval;      
         switch(data.type){ // 1 = ntfy, 2 = telegram, 3 = discord
-          case 1:
+          case 1: //ntfy
             document.getElementById("topic").value = data.url;
             showOptionNotify(data.type);
           break;
-          case 2:
-            document.getElementById("telegram_token").data.url;
+          case 2: //Telegram
+            document.getElementById("telegram_token").value = data.url;
             document.getElementById("telegram_channel").value = data.channel;
             showOptionNotify(data.type);
           break;
-          case 3:
-            document.getElementById("discord_webhook").data.url;   
+          case 3: //Discord
+            document.getElementById("discord_webhook").value = data.url;   
             showOptionNotify(data.type);
           break;
         }

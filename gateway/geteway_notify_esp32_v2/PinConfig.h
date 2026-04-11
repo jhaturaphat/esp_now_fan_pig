@@ -1,6 +1,6 @@
 
 
-#define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+// #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 //GPIO สำหรับ ESP32-Dev-Module, ESP-32U
 #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 #define RELAY1_PIN 16  //out put Active LOW
