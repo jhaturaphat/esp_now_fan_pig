@@ -116,7 +116,10 @@ String Notifier::createNtfyMessage(String jsonString) {
   message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];
-  
+
+  bool ac_loss = (bool)doc["ac_loss"];
+  message += "⚡Main Power is "+String(ac_loss ? "🚫Offline\n" : "🔋Online\n");
+
   for (JsonObject sensor : sensors) {
     int id = sensor["id"];
     bool online = sensor["online"];

@@ -11,6 +11,8 @@
 #include "PinConfig.h"
 
 
+// #define DEBUG //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
+
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 7 * 3600, 60000); // UTC+7 สำหรับประเทศไทย

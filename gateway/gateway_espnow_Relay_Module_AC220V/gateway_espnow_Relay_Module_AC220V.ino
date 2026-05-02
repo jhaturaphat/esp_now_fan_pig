@@ -39,6 +39,7 @@ const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
 
 // --- Switch PIN
 bool disableSiren = false;
+bool ac220_loss = false;  //สถานะไฟฟ้า 220V อ่านค่ามาจาก relay 220V
 
 // เก็บสถานะของแต่ละ sensor
 struct sensor_storage {  
@@ -148,7 +149,7 @@ void sendSensorsData(){
     obj["switch"] = sensors_storage[i].switch_state;
     obj["uptime"] = sensors_storage[i].last_seen / 1000;    
   }
-  
+  doc["ac_loss"] = ac220_loss;
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
   doc["mac"] = WiFi.macAddress();
@@ -323,7 +324,7 @@ void test_gw(){
 void loop() {  
   //Relay cctive HIGH
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
-  bool ac220_loss = (digitalRead(AC220_LOSS) == LOW); // เก็บค่าจาก relay 200V ac 
+  ac220_loss = (digitalRead(AC220_LOSS) == LOW); // เก็บค่าจาก relay 200V ac 
   #if defined(DEBUG)
   if(disableSiren){
     Serial.print("Switch Disable Siren State = ");
