@@ -214,7 +214,7 @@ void setup() {
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
   pinMode(KID_BUG_PIN, INPUT_PULLUP);
-  pinMode(AC220_LOSS, INPUT_PULLUP)
+  pinMode(AC220_LOSS, INPUT_PULLUP);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
@@ -323,7 +323,7 @@ void test_gw(){
 void loop() {  
   //Relay cctive HIGH
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
-  bool ac220_loss = (digitalRead(AC220_LOSS) == LOW);
+  bool ac220_loss = (digitalRead(AC220_LOSS) == LOW); // เก็บค่าจาก relay 200V ac 
   #if defined(DEBUG)
   if(disableSiren){
     Serial.print("Switch Disable Siren State = ");
@@ -381,8 +381,6 @@ void loop() {
     digitalWrite(RELAY2_PIN, LOW);     
   }
 
-  // ตรวจสอบไฟฟ้า AC220 Loss
-  if(digitalRead(TEST_PIN) == LOW)
   // ---------------------------------------------------------------------------------
   // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ
   // if(offline_count > 0 ){      
