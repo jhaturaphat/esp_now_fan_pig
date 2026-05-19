@@ -5,6 +5,7 @@
 #include <ESPmDNS.h>
 #include <DNSServer.h>
 #include <ArduinoJson.h>
+#include <AsyncJson.h> 
 #include <ESPAsyncWebServer.h>
 
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
