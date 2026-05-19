@@ -31,6 +31,7 @@ const unsigned long SIREN_DURATION = 5000; // 5 วินาที
 unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
+unsigned long PERIOD_SIREN2 = 0; 
 bool handleAlarm = false; 
 bool reload = true;
 // ประกาศตัวแปร global สำหรับ LED Status
@@ -370,13 +371,16 @@ void loop() {
 
   }else{
     // ส่งแจ้งสถานะปกติ 1 ครั้ง หลังจากมี Alarm เกิดขึ้น
-    if(handleAlarm && (alarm_count == 0)){
-      handleAlarm = !handleAlarm;
-      sendSensorsData(); 
-    }
-    if(reload){
-      reload = !reload;
-      sendSensorsData(); 
+    if(millis() - PERIOD_SIREN2 >= SIREN_DURATION){
+      PERIOD_SIREN2 = millis(); 
+      if(handleAlarm && (alarm_count == 0)){
+        handleAlarm = !handleAlarm;
+        sendSensorsData(); 
+      }
+      if(reload){
+        reload = !reload;
+        sendSensorsData(); 
+      }
     }
     digitalWrite(RELAY1_PIN, LOW);     
     digitalWrite(RELAY2_PIN, LOW);     
