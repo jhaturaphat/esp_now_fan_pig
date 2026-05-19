@@ -51,6 +51,9 @@ String Notifier::createDiscordMessage(String jsonString) {
   message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];
+
+  message += "⚡Main power is "+doc["ac_loss"] ? "🔴OFFLINE\n":"🟢ONLINE\n";
+
   for (JsonObject sensor : sensors) {
     int id = sensor["id"];
     bool online = sensor["online"];
@@ -112,7 +115,7 @@ String Notifier::createNtfyMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
-  String message = "**🐷🐓Sensors Status Report**\n";
+  String message = "\n**🐷🐓Sensors Status Report**\n";
   message +=  "**🏠"+location+"**\n\n";
   
   JsonArray sensors = doc["sensors"];

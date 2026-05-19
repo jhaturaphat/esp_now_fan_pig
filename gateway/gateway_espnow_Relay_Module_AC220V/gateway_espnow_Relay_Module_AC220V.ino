@@ -7,7 +7,7 @@
 // #define DEBUG  // เอาคอมเมนต์ออกเมิ่ออยู่ในโหมด DEBUG
 
 // ESP32 Relay x2 Module
-#define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
+// #define KID_BUG_PIN 34 //สำหรับป้องกันโปรแกรม
 #define RELAY1_PIN 17  //out put Active LOW
 #define RELAY2_PIN 16  //out put Active LOW
 #define LED_STATUS 23  //out put Active HIGH
@@ -149,7 +149,7 @@ void sendSensorsData(){
     obj["switch"] = sensors_storage[i].switch_state;
     obj["uptime"] = sensors_storage[i].last_seen / 1000;    
   }
-  doc["ac_loss"] = ac220_loss;
+  doc["ac_loss"] = ac220_loss;   // ค่า off line = true | on line = false
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
   doc["mac"] = WiFi.macAddress();
@@ -214,8 +214,8 @@ void setup() {
   // Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
-  pinMode(KID_BUG_PIN, INPUT_PULLUP);
-  pinMode(AC220_LOSS, INPUT_PULLUP);
+  // pinMode(KID_BUG_PIN, INPUT_PULLUP);
+  pinMode(AC220_LOSS, INPUT);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
@@ -286,12 +286,12 @@ void setup() {
   // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต่ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
   initializeSensorStorage();
 
-  if(digitalRead(KID_BUG_PIN) != LOW){  
-    #if defined(DEBUG)  
-    Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
-    #endif
-    ESP.restart();
-  }
+  // if(digitalRead(KID_BUG_PIN) != LOW){  
+  //   #if defined(DEBUG)  
+  //   Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
+  //   #endif
+  //   ESP.restart();
+  // }
 
   blinkLED();
   //Relay cctive HIGH
