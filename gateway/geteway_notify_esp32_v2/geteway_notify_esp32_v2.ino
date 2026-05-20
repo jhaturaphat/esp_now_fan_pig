@@ -51,67 +51,63 @@ void receiveData() {
   }
 }
 
-void processJson(String jsonString) {
+void processJson(const String& jsonString) { // 1. ส่งค่าแบบอ้างอิง (&) ลดการสำเนาข้อความในแรม
   digitalWrite(TEST_PIN_SERIAL, HIGH);
-  StaticJsonDocument<1024> doc;
+  
+  // 2. ใช้ JsonDocument ตัวใหม่ (ArduinoJson V7) เบาและเร็วกว่า StaticJsonDocument ตัวเก่ามาก
+  JsonDocument doc; 
+  
   #if defined(DEBUG)
     Serial.println(jsonString);
   #endif
+  
   DeserializationError error = deserializeJson(doc, jsonString);
   
   if (error) {
-    // digitalWrite(TEST_PIN_SERIAL, LOW);
     digitalWrite(RELAY1_PIN, HIGH);
     digitalWrite(RELAY2_PIN, HIGH);
     #if defined(DEBUG)
-    Serial.println("JSON parse failed!");
+      Serial.println(F("JSON parse failed!")); // ใช้ F() มาร์โครเพื่อประหยัดแรม RAM
     #endif
     return;
   }
   
   #if defined(DEBUG)
-  Serial.println("📨 Data received!");
-  #endif
-  // ส่งแจ้งเตือน 🔕🔔
-  notifier.sendAll(jsonString);
-  // ประมวลผลข้อมูล
-  JsonArray sensors = doc["sensors"];
-  // for (JsonObject sensor : sensors) {
-  //   int id = sensor["id"];
-  //   bool online = sensor["online"];
-  //   // ... ทำอะไรต่อตามต้องการ
-  // }
-  #if defined(DEBUG)
-  Serial.print("***Alert count = ");
-  Serial.print((int)doc["alarm_count"]);
-  Serial.print(" | Offline count = ");
-  Serial.println((int)doc["offline_count"]);
-  if(dsiable_siren()){
-    Serial.println("🔕");
-  }else{
-    Serial.println("🔔");
-  }
+    Serial.println(F("📨 Data received!"));
   #endif
 
-  if(((int)doc["alarm_count"] > 0) || ((int)doc["offline_count"]) > 0){    
-    if(dsiable_siren()){
-      digitalWrite(RELAY1_PIN, HIGH);
-      digitalWrite(RELAY2_PIN, HIGH);
-      #if defined(DEBUG)
-      Serial.println("🔕🔕");
-      #endif
-    }else{
-      digitalWrite(RELAY1_PIN, LOW);
-      digitalWrite(RELAY2_PIN, LOW);
-      #if defined(DEBUG)
-      Serial.println("🔔🔔");
-      #endif
-    }
-  }else{
+  notifier.sendAll(jsonString);
+
+  // 3. ดึงค่ามาเก็บในตัวแปรครั้งเดียว ลดการเข้าถึง Object ใน JSON ซ้ำซ้อน (ทำงานเร็วขึ้นชัดเจน)
+  int alarm_count = doc["alarm_count"];
+  int offline_count = doc["offline_count"];
+  bool is_siren_disabled = dsiable_siren();
+
+  #if defined(DEBUG)
+    Serial.print(F("***Alert count = "));
+    Serial.print(alarm_count);
+    Serial.print(F(" | Offline count = "));
+    Serial.println(offline_count);
+    Serial.println(is_siren_disabled ? F("🔕") : F("🔔"));
+  #endif
+
+  // 4. ยุบและจัดกลุ่มเงื่อนไข Logic (ผลลัพธ์เหมือนเดิม 100% แต่สั้นลงและประมวลผลไวขึ้น)
+  if ((alarm_count > 0 || offline_count > 0) && !is_siren_disabled) {
+    digitalWrite(RELAY1_PIN, LOW);
+    digitalWrite(RELAY2_PIN, LOW);
+    #if defined(DEBUG)
+      Serial.println(F("🔔🔔"));
+    #endif
+  } else {
+    // บล็อกนี้จะทำงานเมื่อ: ไม่มี alarm/offline เลย หรือ มีแต่โดนปิดไซเรนอยู่ (dsiable_siren เป็น true)
     digitalWrite(RELAY1_PIN, HIGH);
     digitalWrite(RELAY2_PIN, HIGH);
+    #if defined(DEBUG)
+      if (alarm_count > 0 || offline_count > 0) Serial.println(F("🔕🔕"));
+    #endif
   }
 }
+
 
 void setup() {
   #if defined(DEBUG) 

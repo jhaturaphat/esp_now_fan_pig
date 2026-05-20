@@ -23,7 +23,7 @@ private:
   String createMessage(String jsonString);
   String createDiscordMessage(String jsonString);
   String createTelegramMessage(String jsonString);
-  String createNtfyMessage(String jsonString);
+  String createNtfyMessage(const String& jsonString);
   
 public:
   Notifier();

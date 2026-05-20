@@ -114,7 +114,7 @@ String Notifier::createTelegramMessage(String jsonString) {
   return message;
 }
 // สร้าง Message สำหรับ ntfy
-String Notifier::createNtfyMessage(String jsonString) {
+/*String Notifier::createNtfyMessage(String jsonString) {
   StaticJsonDocument<1024> doc;
   deserializeJson(doc, jsonString);
   
@@ -142,7 +142,72 @@ String Notifier::createNtfyMessage(String jsonString) {
   message += "\n🎁 ch=" + String(doc["ch"]) +" | mac=" + String(doc["mac"]);
   
   return message;
+}*/
+
+//Version 2 
+String Notifier::createNtfyMessage(const String& jsonString) { // 1. ส่งแบบอ้างอิง (&) ลดการสำเนาข้อความในแรม
+  // 2. ใช้ JsonDocument (V7) เพื่อความเร็วและประหยัดหน่วยความจำ
+  JsonDocument doc;
+  deserializeJson(doc, jsonString);
+  
+  // 3. จองพื้นที่หน่วยความจำล่วงหน้า (ลดขั้นตอนการตัดต่อ/จองแรมใน Loop บ่อยๆ)
+  String message;
+  message.reserve(1024); 
+
+  message += F("**🐷🐓Sensors Status Report**\n**🏠");
+  message += location;
+  message += F("**\n\n");
+  
+  bool ac_loss = doc["ac_loss"]; // ดึงค่าตรงๆ ไม่ต้อง Cast Type
+  message += F("⚡Main Power is ");
+  message += ac_loss ? F("🚫Offline\n") : F("🔋Online\n"); // ใช้ F() ช่วยประหยัดแรม
+  
+  JsonArray sensors = doc["sensors"];
+  for (JsonObject sensor : sensors) {
+    int id = sensor["id"];
+    bool online = sensor["online"];
+    bool switch_state = sensor["switch"];
+    unsigned long uptime = sensor["uptime"];
+    
+    message += F("🤖");
+    message += id; // String เติมต่อตัวเลขได้เลย ไม่ต้องครอบ String(id) ให้ช้าลง
+    message += F(": ");
+    
+    // 4. แยกการทำงานเชิงตรรกะแบบ Flat ช่วยให้ MCU ประมวลผลเงื่อนไขได้เร็วกว่าซ้อนกันไปมา
+    if (online) {
+      message += F("🟢ONLINE");
+    } else if (uptime > 0) {
+      message += F("🔴OFFLINE");
+    } else {
+      message += F("⚫NONE");
+    }
+    
+    message += F(" | ");
+    
+    if (uptime > 0) {
+      message += switch_state ? F("☃️ปกติ") : F("🚨ฉุกเฉิน");
+    } else {
+      message += F("🔌ไม่พบ");
+    }
+    
+    message += F(" | Uptime: ");
+    message += uptime;
+    message += F("s\n");
+  }
+  
+  // 5. ดึงข้อมูลท้ายตารางมาเติมโดยตรง ไม่ต้องผ่าน String()
+  message += F("\n⚠️ *Alarms:* ");
+  message += (int)doc["alarm_count"];
+  message += F("❌ *Offline:* ");
+  message += (int)doc["offline_count"];
+  message += F("\n🎁 ch=");
+  message += (int)doc["ch"];
+  message += F(" | mac=");
+  message += doc["mac"].as<const char*>(); // อ่านค่า string จาก JSON ตรงๆ 
+  
+  return message;
 }
+
 
 // ส่งข้อมูลรายงานไปยัง Discord
 bool Notifier::sendDiscord(String jsonString) {

@@ -273,8 +273,7 @@ void setup() {
   // -------------------------------------------------------------------------------
   WiFi.setSleep(false);  // ป้องกัน WiFi sleep สำหรับ ESP-NOW
   WiFi.macAddress(myConfig.virtualMac); // กำหนด Mac address ใหม่
-  static_mac_address = WiFi.macAddress(); // อ่านค่า MAC
-  
+    
   MAX_SENSORS = myConfig.sensor;
   // กำหนด Channel
   esp_wifi_set_promiscuous(true);
@@ -288,7 +287,7 @@ void setup() {
     #endif
     return;
   }
-
+  static_mac_address = WiFi.macAddress(); // อ่านค่า MAC 
   // ลงทะเบียน callback สำหรับรับข้อมูล
   esp_now_register_recv_cb(onDataReceive);
 
@@ -317,7 +316,7 @@ void setup() {
   Serial.printf("   {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", 
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   Serial.println();
-  #endif
+  #endif  
   // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต่ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
   initializeSensorStorage();
 
@@ -369,7 +368,7 @@ void loop() {
 
   checkSensorsCommunication();
   // ----------------------------------------------------------------------------------
-  CheckHashAlarm();
+  CheckHashAlarm(); //เช็คว่ามี Alerm ทุกๆ 5 วินาที
   // ----------------------------------------------------------------------------------
   test_gw();
   // ----------------------------------------------------------------------------------
@@ -405,11 +404,11 @@ void loop() {
 
   }else{
     // ส่งแจ้งสถานะปกติ 1 ครั้ง หลังจากมี Alarm เกิดขึ้น
-    if(millis() - PERIOD_SIREN2 >= SIREN_DURATION){
-      PERIOD_SIREN2 = millis(); 
-      if(handleAlarm && (alarm_count == 0)){
-        handleAlarm = !handleAlarm;
+    if(millis() - PERIOD_SIREN2 >= 10000){
+      PERIOD_SIREN2 = millis();       
+      if(handleAlarm && (alarm_count == 0)){        
         sendSensorsData(); 
+        handleAlarm = !handleAlarm;
       }
       if(reload){
         reload = !reload;
