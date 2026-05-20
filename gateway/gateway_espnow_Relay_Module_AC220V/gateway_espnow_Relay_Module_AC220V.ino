@@ -37,6 +37,8 @@ bool reload = true;
 // ประกาศตัวแปร global สำหรับ LED Status
 unsigned long led_blink_start = 0;
 const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
+String static_mac_address = "";
+StaticJsonDocument<1024> doc; //ประกาศ JsonDocument ไว้ข้างนอก
 
 // --- Switch PIN
 bool disableSiren = false;
@@ -138,7 +140,7 @@ void CheckHashAlarm(){
   }
 }
 
-void sendSensorsData(){
+/*void sendSensorsData(){
   StaticJsonDocument<1024> doc;  
   // สร้าง array ของ sensors
   JsonArray sensors = doc.createNestedArray("sensors");
@@ -153,9 +155,40 @@ void sendSensorsData(){
   doc["ac_loss"] = ac220_loss;   // ค่า off line = true | on line = false
   doc["alarm_count"] = alarm_count;
   doc["offline_count"] = offline_count;
-  doc["mac"] = WiFi.macAddress();
+  doc["mac"] = static_mac_address;
   doc["ch"] = WiFi.channel();
   
+  serializeJson(doc, Serial2);
+  Serial2.print("\n");
+}*/
+
+// Up speed function sendSensorsData 
+void sendSensorsData(){
+  // เคลียร์ข้อมูลเก่าออก (เร็วมากเพราะไม่ต้องจองพื้นที่เมมโมรี่ใหม่)
+  doc.clear(); 
+  
+  // สร้าง Array ของ sensors
+  JsonArray sensors = doc.createNestedArray("sensors");
+  
+  for(int i = 0; i < MAX_SENSORS; i++){
+    JsonObject obj = sensors.createNestedObject();
+    obj["id"] = i + 1;
+    obj["online"] = sensors_storage[i].is_online;
+    obj["switch"] = sensors_storage[i].switch_state;
+    // ใช้การเลื่อนบิต (Bit Shift) หรือหารตรงๆ 
+    // ถ้าไม่คิดมากการหารด้วย 1000 ปกติก็ยอมรับได้ครับ
+    obj["uptime"] = sensors_storage[i].last_seen / 1000;    
+  }
+  
+  doc["ac_loss"] = ac220_loss;   
+  doc["alarm_count"] = alarm_count;
+  doc["offline_count"] = offline_count;
+  
+  // ดึงค่า MAC จากตัวแปรที่อ่านไว้แล้ว (จุดนี้จะทำให้โค้ดเร็วขึ้นอย่างเห็นได้ชัด)
+  doc["mac"] = static_mac_address;
+  doc["ch"] = WiFi.channel();
+  
+  // ส่งข้อมูลออกทาง Serial2
   serializeJson(doc, Serial2);
   Serial2.print("\n");
 }
@@ -240,6 +273,7 @@ void setup() {
   // -------------------------------------------------------------------------------
   WiFi.setSleep(false);  // ป้องกัน WiFi sleep สำหรับ ESP-NOW
   WiFi.macAddress(myConfig.virtualMac); // กำหนด Mac address ใหม่
+  static_mac_address = WiFi.macAddress(); // อ่านค่า MAC
   
   MAX_SENSORS = myConfig.sensor;
   // กำหนด Channel
