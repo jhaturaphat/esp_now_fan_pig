@@ -115,7 +115,6 @@ void setup() {
   #endif
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
    
-  pinMode(KID_BUG_PIN, INPUT_PULLUP);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT);
@@ -195,16 +194,7 @@ void setup() {
       notifier.enableDiscord(true);
     break;
   }
-    
 
-  
-  if(digitalRead(KID_BUG_PIN) != LOW){      
-    #if defined(DEBUG)  
-    Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
-    #endif
-    // return;
-    ESP.restart();
-  }
 
   // เริ่มต้น NTP Client
   timeClient.begin();
