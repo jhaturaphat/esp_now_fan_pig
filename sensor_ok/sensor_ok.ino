@@ -161,9 +161,9 @@ void loop() {
   if (current_time - last_heartbeat > HEARTBEAT_INTERVAL){
   // คำนวณ random() ทุก loop
   // if (current_time - last_heartbeat > random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX)) {
-    if(current_switch_state){  //หาก current_switch_state == LOW ไม่ต้องส่งข้อมูล ให้โค๊ดก่อนหน้านี้ส่งแทน
+    
       sendSensorData(true);
-    }
+    
     last_heartbeat = current_time;
     // กระพริบ LED เมื่อส่งข้อมูล
     // blinkStatusLED();
