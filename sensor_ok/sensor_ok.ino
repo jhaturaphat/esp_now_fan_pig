@@ -27,9 +27,9 @@ unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;
 // ค่าตั้งเวลา
 // const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
-const unsigned long HEARTBEAT_INTERVAL = random(500, 10000); // ส่ง heartbeat ทุก 5-10 วินาที
-const unsigned long DEBOUNCE_DELAY = 200;        // รอ 200ms เพื่อยืนยันสถานะ
-const unsigned long CONFIRMATION_DELAY = 500;    // รอ 500ms ก่อนส่งข้อมูล
+const unsigned long HEARTBEAT_INTERVAL = random(500, 10000); // ส่ง heartbeat ทุก 8-10 วินาที
+const unsigned long DEBOUNCE_DELAY = 1000;        // รอ 1000ms เพื่อยืนยันสถานะ
+const unsigned long CONFIRMATION_DELAY = 1500;    // รอ 1500ms ก่อนส่งข้อมูล
 
 // ประกาศตัวแปร global สำหรับ LED Status
 unsigned long led_blink_start = 0;
@@ -161,7 +161,9 @@ void loop() {
   if (current_time - last_heartbeat > HEARTBEAT_INTERVAL){
   // คำนวณ random() ทุก loop
   // if (current_time - last_heartbeat > random(RANDOM_DELAY_MIN, RANDOM_DELAY_MAX)) {
-    sendSensorData(true);
+    if(current_switch_state){  //หาก current_switch_state == LOW ไม่ต้องส่งข้อมูล ให้โค๊ดก่อนหน้านี้ส่งแทน
+      sendSensorData(true);
+    }
     last_heartbeat = current_time;
     // กระพริบ LED เมื่อส่งข้อมูล
     // blinkStatusLED();

@@ -9,9 +9,9 @@
 // #define DEBUG  //เปิดใช้งานเมื่ออยู่ในโหมดพัฒนา
 // --- โครงสร้างข้อมูลสำหรับเก็บการตั้งค่า ---
 struct DeviceConfig {
-    uint8_t deviceID = 0;
+    uint8_t deviceID = 1;
     uint8_t channel = 1;
-    uint8_t gatewayMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};    
+    uint8_t gatewayMAC[6] = {0x1C, 0x69, 0x20, 0x9B, 0x60, 0x48}; 
 };
 
 // --- HTML Template (อยู่นอกคลาส) ---
@@ -31,12 +31,12 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style></head><body>
     <h1>Sensor Config</h1>
     <div class="container">
-    <form id="configForm" onsubmit="submitForm(event)">f:\Develooper\Arduino\esp_now_fan_pig\gateway\gateway_espnow_Relay_Module\gateway_espnow_Relay_Module.ino
-    <label for="id">Sensor ID (1-10):</label>
+    <form id="configForm" onsubmit="submitForm(event)">
+    <label for="id">Sensor ID (1-20):</label>
     <input type="number" id="id" name="id" min="1" max="20" value="%ID_VALUE%" placeholder="1-20" required>
     <label for="ch">Channel ID (1-13):</label>
     <input type="number" id="channel" name="channel" min="1" max="13" value="%CH_VALUE%" placeholder="1-13" required>
-    <label for="mac">Gateway MAC (1F:2F:3F:4F:5F:6F):</label>
+    <label for="mac">Gateway MAC 1C:69:20:9B:60:48</label>
     <input type="text" id="mac" name="mac" pattern="[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}" value="%MAC_VALUE%" required>
     <input type="submit" value="Save" class="btn">    
     </form>
@@ -153,14 +153,14 @@ private:
         // หน้าหลัก (แสดงฟอร์ม)
       server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request){
         String html = index_html; // ดึงจาก PROGMEM
-        if(currentConfig.deviceID > 10){
-            html.replace("%ID_VALUE%", "");
+        if(currentConfig.deviceID > 20){
+            html.replace("%ID_VALUE%", "1");
         }else{
             html.replace("%ID_VALUE%", String(currentConfig.deviceID));
         }
 
         if(currentConfig.channel > 13){
-            html.replace("%CH_VALUE%", "");
+            html.replace("%CH_VALUE%", "1");
         }else{
             html.replace("%CH_VALUE%", String(currentConfig.channel));
         }
