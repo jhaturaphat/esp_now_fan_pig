@@ -34,6 +34,7 @@ unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็
 unsigned long PERIOD_SIREN2 = 0; 
 bool handleAlarm = false; 
 bool reload = true;
+unsigned retry_count = 0;
 // ประกาศตัวแปร global สำหรับ LED Status
 unsigned long led_blink_start = 0;
 const unsigned long LED_BLINK_DURATION = 100; // กระพริบ 100ms
@@ -408,8 +409,12 @@ void loop() {
       PERIOD_SIREN2 = millis();       
       if(handleAlarm && (alarm_count == 0)){        
         sendSensorsData(); 
-        handleAlarm = !handleAlarm;
-      }
+        if(retry_count >= 2){
+          handleAlarm = !handleAlarm;
+          retry_count = 0;
+        }
+        retry_count++;      
+      }      
       if(reload){
         reload = !reload;
         sendSensorsData(); 

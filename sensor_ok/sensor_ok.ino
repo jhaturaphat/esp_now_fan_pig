@@ -27,9 +27,9 @@ unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;
 // ค่าตั้งเวลา
 // const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
-const unsigned long HEARTBEAT_INTERVAL = random(500, 10000); // ส่ง heartbeat ทุก 8-10 วินาที
-const unsigned long DEBOUNCE_DELAY = 1000;        // รอ 1000ms เพื่อยืนยันสถานะ
-const unsigned long CONFIRMATION_DELAY = 1500;    // รอ 1500ms ก่อนส่งข้อมูล
+const unsigned long HEARTBEAT_INTERVAL = random(5000, 10001); // ส่ง heartbeat ทุก 8-10 วินาที
+const unsigned long DEBOUNCE_DELAY = 500;        // รอ 500ms เพื่อยืนยันสถานะ
+const unsigned long CONFIRMATION_DELAY = 800;    // รอ 800ms ก่อนส่งข้อมูล
 
 // ประกาศตัวแปร global สำหรับ LED Status
 unsigned long led_blink_start = 0;
