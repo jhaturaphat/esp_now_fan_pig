@@ -13,7 +13,7 @@
 #define LED_STATUS 23  //out put Active HIGH
 #define CONFIG_PIN 0  //input pulll up
 #define TEST_PIN 32 //input pulll up
-#define TEST_PIN_SERIAL 18 //input pulll up
+#define TEST_PIN_SERIAL 23 //input pulll up old pin 18
 #define DISABLE_SIREN 25  //input pulll up
 #define AC220_LOSS 27  //input pull up
 #define RXD2 21  //สีส้ม
