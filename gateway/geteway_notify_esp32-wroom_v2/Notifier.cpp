@@ -201,9 +201,9 @@ String Notifier::createNtfyMessage(const String& jsonString) { // 1. ส่ง�
   message += F("❌ *Offline:* ");
   message += (int)doc["offline_count"];
   message += F("\n🎁 ch=");
-  message += (int)doc["ch"];
+  message += String(doc["ch"]);
   message += F(" | mac=");
-  message += doc["mac"].as<const char*>(); // อ่านค่า string จาก JSON ตรงๆ 
+  message += String(doc["mac"]); // อ่านค่า string จาก JSON ตรงๆ 
   
   return message;
 }

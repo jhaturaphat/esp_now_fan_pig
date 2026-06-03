@@ -33,7 +33,7 @@ struct ConfigNotify {
 class ConfigManager {
   private: 
   // กำหนดขาใช้งาน
-  const int LED_STATUS = 23;
+  const int LED_STATUS = 2;
 
   // web server object
   AsyncWebServer server;

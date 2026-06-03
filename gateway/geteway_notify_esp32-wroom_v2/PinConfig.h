@@ -5,7 +5,7 @@
 
 #define RELAY1_PIN 33  //out put Active LOW
 #define RELAY2_PIN 32  //out put Active LOW
-#define LED_STATUS 23  //out put Active HIGH
+#define LED_STATUS 2  //out put Active HIGH 23
 // #define CONFIG_PIN 0  //input pulll up
 #define CONFIG_PIN 0  //for Board 2xRlay
 #define TEST_PIN 22 //input pulll up
