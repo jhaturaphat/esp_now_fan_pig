@@ -15,7 +15,7 @@
 #define TEST_PIN 32 //input pulll up
 #define TEST_PIN_SERIAL 23 //input pulll up old pin 18
 #define DISABLE_SIREN 25  //input pulll up
-#define AC220_LOSS 27  //input pull up
+#define AC220_LOSS 27  //input
 #define RXD2 21  //สีส้ม
 #define TXD2 19  //ขาว-ส้ม
 
@@ -43,7 +43,7 @@ StaticJsonDocument<1024> doc; //ประกาศ JsonDocument ไว้ข้�
 
 // --- Switch PIN
 bool disableSiren = false;
-bool ac220_loss = false;  //สถานะไฟฟ้า 220V อ่านค่ามาจาก relay 220V
+bool ac220_loss = false;  //สถานะไฟฟ้า 220V 
 
 // เก็บสถานะของแต่ละ sensor
 struct sensor_storage {  
@@ -359,7 +359,7 @@ void test_gw(){
 void loop() {  
   //Relay cctive HIGH
   disableSiren  = (digitalRead(DISABLE_SIREN) == LOW);
-  ac220_loss = (digitalRead(AC220_LOSS) == LOW); // เก็บค่าจาก relay 200V ac 
+  ac220_loss = (digitalRead(AC220_LOSS) == HIGH); // ถ้าสถานะไฟขานี้เป็น 3.3V แสดงว่าไฟฟ้าดับหรือ Adaptor 12 V เสีย 
   #if defined(DEBUG)
   if(disableSiren){
     Serial.print("Switch Disable Siren State = ");
