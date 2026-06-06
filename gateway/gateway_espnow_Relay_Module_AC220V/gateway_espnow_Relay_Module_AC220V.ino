@@ -51,6 +51,9 @@ struct sensor_storage {
   bool switch_state;        // สถานะ switch
   unsigned long last_seen;  // เวลาที่รับสัญญาณครั้งล่าสุด
   uint8_t mac[6];          // MAC address ของ sensor
+  // --- สิ่งที่ต้องเพิ่มเข้าไป ---
+  bool pending_state;       // สถานะใหม่ที่รอการตรวจสอบ
+  unsigned long last_changed; // เวลาที่ตรวจพบว่าสถานะเริ่มเปลี่ยนไปจาก switch_state
 };
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
@@ -77,7 +80,7 @@ sensor_storage* sensors_storage = nullptr;  // ใช้ pointer แทน array
 int MAX_SENSORS = 10;  // เก็บค่าที่อ่านจาก EEPROM
 
 // Callback สำหรับรับข้อมูล (สำหรับ ESP32 Arduino Core 3.x)
-void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len){
+/*void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len){
   // เปิด LED และบันทึกเวลา
   digitalWrite(LED_STATUS, HIGH);
   led_blink_start = millis();
@@ -95,6 +98,48 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     memcpy(sensors_storage[index].mac, recv_info->src_addr, 6); 
   }
   
+} //End*/
+
+void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len){
+  // เปิด LED และบันทึกเวลา
+  digitalWrite(LED_STATUS, HIGH);
+  led_blink_start = millis();
+  
+  // สร้าง object sensor
+  sensor_message msg;
+  memcpy(&msg, incomingData, sizeof(msg));
+
+  // หาก sensor id อยู่ในระยะที่กำหนด
+  if(msg.sensor_id >= 1 && msg.sensor_id <= MAX_SENSORS){
+    int index = msg.sensor_id - 1;
+    unsigned long current_time = millis();
+    
+    // 1. อัพเดทสถานะพื้นฐานเสมอ
+    sensors_storage[index].is_online = true;
+    sensors_storage[index].last_seen = current_time;
+    memcpy(sensors_storage[index].mac, recv_info->src_addr, 6); 
+
+    // 2. ตรวจสอบเรื่องการเปลี่ยนสถานะของ Switch
+    // เคสที่ 1: ค่าที่ส่งมา "เหมือนเดิม" กับค่าจริงที่บันทึกไว้
+    if (msg.switch_status == sensors_storage[index].switch_state) {
+      // ให้รีเซ็ตค่า pending ให้เท่ากับปัจจุบัน (ล้างสถานะการรอคอย)
+      sensors_storage[index].pending_state = msg.switch_status;
+    }
+    // เคสที่ 2: ค่าที่ส่งมา "ไม่เหมือนเดิม" (เกิดการเปลี่ยนแปลง)
+    else {
+      // เช็กก่อนว่า มันพึ่งจะเปลี่ยน (pending ตัวเก่าไม่เหมือนกับตัวใหม่ที่ส่งมา)
+      if (sensors_storage[index].pending_state != msg.switch_status) {
+        sensors_storage[index].pending_state = msg.switch_status; // บันทึกค่าใหม่ที่รอตรวจ
+        sensors_storage[index].last_changed = current_time;       // เริ่มจับเวลา 5 วินาที ณ จุดนี้
+      } 
+      // ถ้ามันส่งค่าเดิมที่เปลี่ยนมาซ้ำ ๆ และเวลาผ่านไปเกิน 5 วินาที (5000 ms) แล้วจริง ๆ
+      else if (current_time - sensors_storage[index].last_changed >= 5000) {
+        sensors_storage[index].switch_state = msg.switch_status;  // ยอมรับค่าใหม่เป็นค่าจริง!
+        
+        // --- (ตรงนี้คุณสามารถใส่ Code ไปสั่งงานอย่างอื่นเพิ่มได้ เมื่อสถานะเปลี่ยนจริง ๆ) ---
+      }
+    }
+  }
 } //End
 
 void checkSensorsCommunication(){
@@ -127,6 +172,9 @@ void initializeSensorStorage() {
     sensors_storage[i].switch_state = true;  // เริ่มต้นเป็น closed
     sensors_storage[i].last_seen = 0;
     memset(sensors_storage[i].mac, 0, 6);
+    // --- กำหนดค่าเริ่มต้นให้ตัวแปรใหม่ที่เพิ่มเข้ามา ---
+    sensors_storage[i].pending_state = true;  // เริ่มต้นให้ตรงกับ switch_state ปัจจุบัน
+    sensors_storage[i].last_changed = 0;     // รีเซ็ตตัวจับเวลาเป็น 0
   }
 }
 
