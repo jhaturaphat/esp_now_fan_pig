@@ -21,13 +21,13 @@
 
 
 
-#define COMMUNICATION_TIMEOUT 30000  // 30 วินาที timeout 
-#define TIMEOUT_SIREN 10000 // 10 วินาที timeout
+#define COMMUNICATION_TIMEOUT 30001  // 30 วินาที timeout 
+#define TIMEOUT_SIREN 10001 // 10 วินาที timeout
 
 // Delay
 int period = 5000; // 10 วินาที
 unsigned long time_now = 0;
-const unsigned long SIREN_DURATION = 5000; // 5 วินาที
+const unsigned long SIREN_DURATION = 10001; // 5 วินาที
 unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
@@ -193,28 +193,6 @@ void CheckHashAlarm(){
   }
 }
 
-/*void sendSensorsData(){
-  StaticJsonDocument<1024> doc;  
-  // สร้าง array ของ sensors
-  JsonArray sensors = doc.createNestedArray("sensors");
-  
-  for(int i = 0; i < MAX_SENSORS; i++){
-    JsonObject obj = sensors.createNestedObject();
-    obj["id"] = i + 1;
-    obj["online"] = sensors_storage[i].is_online;
-    obj["switch"] = sensors_storage[i].switch_state;
-    obj["uptime"] = sensors_storage[i].last_seen / 1000;    
-  }
-  doc["ac_loss"] = ac220_loss;   // ค่า off line = true | on line = false
-  doc["alarm_count"] = alarm_count;
-  doc["offline_count"] = offline_count;
-  doc["mac"] = static_mac_address;
-  doc["ch"] = WiFi.channel();
-  
-  serializeJson(doc, Serial2);
-  Serial2.print("\n");
-}*/
-
 // Up speed function sendSensorsData 
 void sendSensorsData(){
   // เคลียร์ข้อมูลเก่าออก (เร็วมากเพราะไม่ต้องจองพื้นที่เมมโมรี่ใหม่)
@@ -341,6 +319,8 @@ void setup() {
     return;
   }
   static_mac_address = WiFi.macAddress(); // อ่านค่า MAC 
+  // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต่ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
+  initializeSensorStorage();
   // ลงทะเบียน callback สำหรับรับข้อมูล
   esp_now_register_recv_cb(onDataReceive);
 
@@ -369,16 +349,8 @@ void setup() {
   Serial.printf("   {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", 
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   Serial.println();
-  #endif  
-  // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต่ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
-  initializeSensorStorage();
+  #endif    
 
-  // if(digitalRead(KID_BUG_PIN) != LOW){  
-  //   #if defined(DEBUG)  
-  //   Serial.print("ป้องกัน Code Protection ต่อขานี้ลงกร์าว");    
-  //   #endif
-  //   ESP.restart();
-  // }
 
   blinkLED();
   //Relay cctive HIGH
@@ -456,7 +428,7 @@ void loop() {
     }
 
   }else{
-    // ส่งแจ้งสถานะปกติ 1 ครั้ง หลังจากมี Alarm เกิดขึ้น
+    // ส่งแจ้งสถานะปกติ 2 ครั้ง หลังจากมี Alarm เกิดขึ้น
     if(millis() - PERIOD_SIREN2 >= 10000){
       PERIOD_SIREN2 = millis();       
       if(handleAlarm && (alarm_count == 0)){        
