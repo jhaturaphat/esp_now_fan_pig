@@ -370,15 +370,6 @@ void test_gw(){
   }
 }
 
-// bool disable_siren(){  
-//   if(digitalRead(DISABLE_SIREN) == LOW){
-//     delay(10);
-//     return true;
-//   }else{
-//     return false;
-//   }
-// }
-
 
 void loop() {  
   //Relay cctive HIGH
@@ -433,6 +424,9 @@ void loop() {
       PERIOD_SIREN2 = millis();       
       if(handleAlarm && (alarm_count == 0)){        
         sendSensorsData(); 
+        #if defined(DEBUG)
+        Serial.printf("แจ้งเตือน %d 🚨🚨ส่งแจ้งสถานะปกติ 2 ครั้ง หลังจากมี Alarm เกิดขึ้น🚨🚨\n", alarm_count);
+        #endif  
         if(retry_count >= 2){
           handleAlarm = !handleAlarm;
           retry_count = 0;
@@ -442,24 +436,15 @@ void loop() {
       if(reload){
         reload = !reload;
         sendSensorsData(); 
+        #if defined(DEBUG)
+        Serial.printf("แจ้งเตือน 🚨🚨ส่งแจ้งสถานะ reload🚨🚨\n");
+        #endif  
       }
     }
     digitalWrite(RELAY1_PIN, LOW);     
     digitalWrite(RELAY2_PIN, LOW);     
   }
 
-  // ---------------------------------------------------------------------------------
-  // Relay 2 มีเซ็นเซอร์บางตัว offline ใช้สัญญาณไฟ
-  // if(offline_count > 0 ){      
-  //   if (millis() - PERIOD_LOSS >= LOSS_DURATION) {
-  //     PERIOD_LOSS = millis();
-  //     sendSensorsData();
-  //     #if defined(DEBUG)
-  //     Serial.printf("มีเซ็นเซอร์จำนวน %d Offline 📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵📵\n" ,offline_count);
-  //     #endif      
-  //   }    
-  // }
-  // ---------------------------------------------------------------------------------
   #if defined(DEBUG) 
     printDebugSensorStatus(); 
   #endif  
