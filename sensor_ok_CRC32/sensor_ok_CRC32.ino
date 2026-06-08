@@ -14,7 +14,7 @@ https://easyeda.com/editor#id=c7245d4e303c4946be1aa8df7e19e6da|8ff0f60a614a4b55a
 
 // โครงสร้างข้อมูลที่ส่งไป Gateway
 // 2. เพิ่มฟิลด์ checksum ไว้ท้ายสุดของ struct
-typedef struct sensor_message {
+typedef struct __attribute__((packed)) sensor_message {
   uint8_t sensor_id;      
   bool switch_status;     
   uint32_t timestamp;     

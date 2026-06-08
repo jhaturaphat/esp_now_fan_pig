@@ -57,7 +57,7 @@ struct sensor_storage {
 };
 
 // โครงสร้างข้อมูลที่รับจาก Sensor
-typedef struct sensor_message {
+typedef struct __attribute__((packed)) sensor_message {
   uint8_t sensor_id;      // ID ของ sensor (1-7)
   bool switch_status;     // สถานะ switch (true=ปกติ, false=แจ้งเตือน)
   uint32_t timestamp;     // timestamp
