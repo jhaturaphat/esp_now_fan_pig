@@ -130,8 +130,9 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     memcpy(sensors_storage[index].mac, recv_info->src_addr, 6); 
 
     // 2. ตรวจสอบเรื่องการเปลี่ยนสถานะของ Switch
-    if (msg.switch_status == sensors_storage[index].switch_state) {
+    if (msg.switch_status == true) {
       sensors_storage[index].pending_state = msg.switch_status;
+      sensors_storage[index].switch_state = msg.switch_status; 
     }
     else {
       if (sensors_storage[index].pending_state != msg.switch_status) {
@@ -139,8 +140,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
         sensors_storage[index].last_changed = current_time;       
       } 
       else if (current_time - sensors_storage[index].last_changed >= 5000) {
-        sensors_storage[index].switch_state = msg.switch_status;  
-        // --- (ตรงนี้ใส่ Code สั่งงานเพิ่มได้) ---
+        sensors_storage[index].switch_state = msg.switch_status;          
       }
     }
   }
