@@ -27,7 +27,7 @@
 // Delay
 int period = 5000; // 10 วินาที
 unsigned long time_now = 0;
-const unsigned long SIREN_DURATION = 10001; // 5 วินาที
+const unsigned long SIREN_DURATION = 10000; // 10 วินาที
 unsigned long PERIOD_LOSS = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
 const unsigned long LOSS_DURATION = 5000;  // 5 วินาที
 unsigned long PERIOD_SIREN = 0; // ตัวแปรสำหรับเก็บเวลาที่ทำการอัปเดตสถานะ LED ครั้งล่าสุด
@@ -420,9 +420,9 @@ void loop() {
 
   }else{
     // ส่งแจ้งสถานะปกติ 2 ครั้ง หลังจากมี Alarm เกิดขึ้น
-    if(millis() - PERIOD_SIREN2 >= 10000){
-      PERIOD_SIREN2 = millis();       
-      if(handleAlarm && (alarm_count == 0)){        
+    if(handleAlarm && (alarm_count == 0)){ 
+      if(millis() - PERIOD_SIREN2 >= 15000){  //15 วินาที
+        PERIOD_SIREN2 = millis();
         sendSensorsData(); 
         #if defined(DEBUG)
         Serial.printf("แจ้งเตือน %d 🚨🚨ส่งแจ้งสถานะปกติ 2 ครั้ง หลังจากมี Alarm เกิดขึ้น🚨🚨\n", alarm_count);
@@ -432,15 +432,17 @@ void loop() {
           retry_count = 0;
         }
         retry_count++;      
-      }      
-      if(reload){
-        reload = !reload;
-        sendSensorsData(); 
-        #if defined(DEBUG)
-        Serial.printf("แจ้งเตือน 🚨🚨ส่งแจ้งสถานะ reload🚨🚨\n");
-        #endif  
       }
+    } 
+
+    if(reload){
+      reload = !reload;
+      sendSensorsData(); 
+      #if defined(DEBUG)
+      Serial.printf("แจ้งเตือน 🚨🚨ส่งแจ้งสถานะ reload🚨🚨\n");
+      #endif  
     }
+  
     digitalWrite(RELAY1_PIN, LOW);     
     digitalWrite(RELAY2_PIN, LOW);     
   }

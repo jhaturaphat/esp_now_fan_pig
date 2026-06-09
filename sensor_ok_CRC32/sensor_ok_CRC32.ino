@@ -22,6 +22,7 @@ typedef struct __attribute__((packed)) sensor_message {
 } sensor_message;
 
 // ตัวแปรสำหรับจัดการสถานะ
+bool current_switch_state = true;
 bool last_switch_state = true;
 bool confirmed_switch_state = true;
 unsigned long last_send_time = 0;
@@ -29,7 +30,7 @@ unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;
 // ค่าตั้งเวลา
 // const unsigned long SEND_INTERVAL = 1000;      // ส่งทุก 1 วินาที เมื่อมีการเปลี่ยนแปลง
-const unsigned long HEARTBEAT_INTERVAL = random(5000, 10001); // ส่ง heartbeat ทุก 8-10 วินาที
+const unsigned long HEARTBEAT_INTERVAL = random(5000, 10001); // ส่ง heartbeat ทุก 5-10 วินาที
 const unsigned long DEBOUNCE_DELAY = 500;        // รอ 500ms เพื่อยืนยันสถานะ
 const unsigned long CONFIRMATION_DELAY = 800;    // รอ 800ms ก่อนส่งข้อมูล
 
@@ -151,7 +152,7 @@ void loop() {
       if (current_time - state_change_time > CONFIRMATION_DELAY) {
         // ส่งข้อมูลเมื่อยืนยันแล้วว่าสถานะเปลี่ยนจริงๆ
         confirmed_switch_state = last_switch_state;
-        sendSensorData(false);
+        sendSensorData(true);
         last_send_time = current_time;        
         // กระพริบ LED เมื่อส่งข้อมูล
         // blinkStatusLED();
@@ -203,7 +204,7 @@ void sendSensorData(bool is_heartbeat) {
   msg.sensor_id = myConfig.deviceID; 
   #endif
 
-  msg.switch_status = digitalRead(REED_SWITCH_PIN);
+  msg.switch_status = last_switch_state; //digitalRead(REED_SWITCH_PIN);
   msg.timestamp = millis();
   
   // 3. คำนวณ CRC32 จากเนื้อข้อมูลทั้งหมด (ยกเว้นช่อง checksum ตัวเอง)
