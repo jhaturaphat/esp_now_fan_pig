@@ -139,7 +139,7 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
         sensors_storage[index].pending_state = msg.switch_status; 
         sensors_storage[index].last_changed = current_time;       
       } 
-      else if (current_time - sensors_storage[index].last_changed >= 5000) {
+      else if (current_time - sensors_storage[index].last_changed >= 2000) {
         sensors_storage[index].switch_state = msg.switch_status;          
       }
     }
