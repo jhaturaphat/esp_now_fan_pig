@@ -45,24 +45,22 @@ StaticJsonDocument<1024> doc; //ประกาศ JsonDocument ไว้ข้�
 bool disableSiren = false;
 bool ac220_loss = false;  //สถานะไฟฟ้า 220V 
 
-// เก็บสถานะของแต่ละ sensor
-struct sensor_storage {  
-  bool is_online;           // สถานะการเชื่อมต่อ
-  bool switch_state;        // สถานะ switch
-  unsigned long last_seen;  // เวลาที่รับสัญญาณครั้งล่าสุด
-  uint8_t mac[6];          // MAC address ของ sensor
-  // --- สิ่งที่ต้องเพิ่มเข้าไป ---
-  bool pending_state;       // สถานะใหม่ที่รอการตรวจสอบ
-  unsigned long last_changed; // เวลาที่ตรวจพบว่าสถานะเริ่มเปลี่ยนไปจาก switch_state
-};
-
 // โครงสร้างข้อมูลที่รับจาก Sensor
 typedef struct __attribute__((packed)) sensor_message {
   uint8_t sensor_id;      // ID ของ sensor (1-7)
   bool switch_status;     // สถานะ switch (true=ปกติ, false=แจ้งเตือน)
   uint32_t timestamp;     // timestamp
-  uint32_t checksum;      // <<--- เพิ่มช่องนี้เข้ามา
+  uint32_t checksum;      // ใช้ตรวจสอบข้อมูล
 } sensor_message;
+
+// เก็บสถานะของแต่ละ sensor
+struct sensor_storage {  
+  bool is_online;           // สถานะการเชื่อมต่อ
+  bool switch_state;        // สถานะ switch
+  unsigned long last_seen;  // เวลาที่รับสัญญาณครั้งล่าสุด
+  uint8_t mac[6];          // MAC address ของ sensor 
+};
+
 
 // เก็บรายการ sensor ที่มีปัญหา
 String offline_sensors = "";
@@ -127,22 +125,8 @@ void onDataReceive(const esp_now_recv_info *recv_info, const uint8_t *incomingDa
     // 1. อัพเดทสถานะพื้นฐานเสมอ
     sensors_storage[index].is_online = true;
     sensors_storage[index].last_seen = current_time;
+    sensors_storage[index].switch_state = msg.switch_status; 
     memcpy(sensors_storage[index].mac, recv_info->src_addr, 6); 
-
-    // 2. ตรวจสอบเรื่องการเปลี่ยนสถานะของ Switch
-    if (msg.switch_status == true) {
-      sensors_storage[index].pending_state = msg.switch_status;
-      sensors_storage[index].switch_state = msg.switch_status; 
-    }
-    else {
-      if (sensors_storage[index].pending_state != msg.switch_status) {
-        sensors_storage[index].pending_state = msg.switch_status; 
-        sensors_storage[index].last_changed = current_time;       
-      } 
-      else if (current_time - sensors_storage[index].last_changed >= 2000) {
-        sensors_storage[index].switch_state = msg.switch_status;          
-      }
-    }
   }
 } //End
 
@@ -176,9 +160,6 @@ void initializeSensorStorage() {
     sensors_storage[i].switch_state = true;  // เริ่มต้นเป็น closed
     sensors_storage[i].last_seen = 0;
     memset(sensors_storage[i].mac, 0, 6);
-    // --- กำหนดค่าเริ่มต้นให้ตัวแปรใหม่ที่เพิ่มเข้ามา ---
-    sensors_storage[i].pending_state = true;  // เริ่มต้นให้ตรงกับ switch_state ปัจจุบัน
-    sensors_storage[i].last_changed = 0;     // รีเซ็ตตัวจับเวลาเป็น 0
   }
 }
 

@@ -67,6 +67,7 @@ class ConfigManager {
 private:
     
     const int LED_PIN = 2;           // GPIO2: Output (LED status)
+    const int CONFIG_BUTTON_PIN = 0;  // GPIO0: Input (LOW = Config Mode)
     const int EEPROM_SIZE = sizeof(DeviceConfig);
 
     // --- Web Server Objects ---    
@@ -247,6 +248,8 @@ private:
                 previousMillis = currentMillis;
                 ledState = !ledState;
                 digitalWrite(LED_PIN, ledState);
+                bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
+                if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
             }
             // ประมวลผลคำขอ DNS และ mDNS
             dnsServer.processNextRequest();

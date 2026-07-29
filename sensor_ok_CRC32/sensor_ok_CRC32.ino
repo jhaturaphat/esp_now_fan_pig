@@ -18,7 +18,7 @@ typedef struct __attribute__((packed)) sensor_message {
   uint8_t sensor_id;      
   bool switch_status;     
   uint32_t timestamp;     
-  uint32_t checksum;      // <<--- เพิ่มช่องนี้เข้ามา
+  uint32_t checksum;      // ใช้ตรวจสอบข้อมูล
 } sensor_message;
 
 // ตัวแปรสำหรับจัดการสถานะ
@@ -134,7 +134,7 @@ void loop() {
   if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
 
   // อ่านสถานะ switch
-  bool current_switch_state = digitalRead(REED_SWITCH_PIN);
+  current_switch_state = digitalRead(REED_SWITCH_PIN);
   unsigned long current_time = millis();
   
    // ตรวจสอบการเปลี่ยนแปลงสถานะ
@@ -177,7 +177,7 @@ void loop() {
     led_blink_start = 0; // reset
   }
   // เข้าสู่โหมดประหยัดไฟ
-  delay(100);
+  //delay(100);
 }
 
 // 1. เพิ่มฟังก์ชันคำนวณ CRC32 (วางไว้ก่อนฟังก์ชัน sendSensorData)
