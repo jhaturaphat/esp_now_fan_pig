@@ -247,9 +247,7 @@ private:
             if (currentMillis - previousMillis >= interval) {
                 previousMillis = currentMillis;
                 ledState = !ledState;
-                digitalWrite(LED_PIN, ledState);
-                bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
-                if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
+                digitalWrite(LED_PIN, ledState);                
             }
             // ประมวลผลคำขอ DNS และ mDNS
             dnsServer.processNextRequest();

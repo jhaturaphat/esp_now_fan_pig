@@ -140,8 +140,8 @@ void loop() {
    // ตรวจสอบการเปลี่ยนแปลงสถานะ
   if (current_switch_state != last_switch_state) {
     // บันทึกเวลาที่สถานะเปลี่ยน
-    state_change_time = current_time;
-    last_switch_state = current_switch_state;
+    state_change_time = current_time;    
+    last_switch_state = current_switch_state;    
   }
 
   // ตรวจสอบว่าสถานะคงที่มานานพอแล้วและผ่านช่วง debounce
@@ -213,7 +213,7 @@ void sendSensorData(bool is_heartbeat) {
 
   // ส่งข้อมูลขนาดเต็มที่มี checksum พ่วงไปด้วย
   esp_now_send(myConfig.gatewayMAC, (uint8_t *) &msg, sizeof(msg));
-  
+    
   #if defined(DEBUG)
   if (is_heartbeat) {
     Serial.printf("Heartbeat sent - Switch: %s\n", msg.switch_status ? " ✅ OPEN" : "🚨 CLOSED");
