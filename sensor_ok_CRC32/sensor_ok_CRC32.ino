@@ -51,6 +51,10 @@ void setup() {
   #if defined(DEBUG)
   Serial.begin(115200);  
   #endif
+  // กำหนด PIN Mode
+  pinMode(REED_SWITCH_PIN, INPUT);  // GPIO3 (RXD) สำหรับ reed switch
+  pinMode(STATUS_LED_PIN, OUTPUT);         // GPIO2 สำหรับ LED
+  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
   // เรียกใช้เมธอด begin()
   // begin() จะตรวจสอบสวิตช์และค่าใน EEPROM
   // ถ้าจำเป็น มันจะรัน Web Server และไม่กลับมาจนกว่าจะรีสตาร์ท  
@@ -62,11 +66,6 @@ void setup() {
   myConfig = cfgManager.getConfig();
 
   // *** สำคัญ: ห้ามใช้ Serial.begin() เพราะใช้ RXD เป็น GPIO ***
-  
-  // กำหนด PIN Mode
-  pinMode(REED_SWITCH_PIN, INPUT_PULLUP);  // GPIO3 (RXD) สำหรับ reed switch
-  pinMode(STATUS_LED_PIN, OUTPUT);         // GPIO2 สำหรับ LED
-  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
   
   // แสดงสถานะเริ่มต้น
   digitalWrite(STATUS_LED_PIN, LOW);
@@ -130,8 +129,8 @@ void setup() {
 
 void loop() {
 
-  bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
-  if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
+  // bool switchPressed = (digitalRead(CONFIG_BUTTON_PIN) == LOW);
+  // if(switchPressed) ESP.restart(); // สั่งให้ ESP รีสตาร์ท;
 
   // อ่านสถานะ switch
   current_switch_state = digitalRead(REED_SWITCH_PIN);

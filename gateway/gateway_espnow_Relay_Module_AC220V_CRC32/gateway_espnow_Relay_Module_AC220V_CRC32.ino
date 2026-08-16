@@ -408,7 +408,7 @@ void loop() {
         #if defined(DEBUG)
         Serial.printf("แจ้งเตือน %d 🚨🚨ส่งแจ้งสถานะปกติ 2 ครั้ง หลังจากมี Alarm เกิดขึ้น🚨🚨\n", alarm_count);
         #endif  
-        if(retry_count >= 2){
+        if(retry_count >= 1){
           handleAlarm = !handleAlarm;
           retry_count = 0;
         }
