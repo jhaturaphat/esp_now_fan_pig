@@ -24,7 +24,7 @@ typedef struct __attribute__((packed)) sensor_message {
 // ตัวแปรสำหรับจัดการสถานะ
 bool current_switch_state = true;
 bool last_switch_state = true;
-bool confirmed_switch_state = true;
+bool confirmed_switch_state = true;  //Proximity NC = true หรือ NO = false
 unsigned long last_send_time = 0;
 unsigned long last_heartbeat = 0;
 unsigned long state_change_time = 0;

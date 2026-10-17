@@ -21,6 +21,8 @@ unsigned int NOTIFICATION_INTERVAL_HOURS = 2;
 unsigned long previousMillisUpdate = 0;
 // กำหนดช่วงเวลาที่จะอัปเดตเวลาจาก NTP (ทุก 1 นาที = 60000 มิลลิวินาที)
 const long intervalUpdate = 60000; 
+
+bool scheduled_time = false;  //ส่งแจ้งเือนตามเวลา
 // --------------------------------------------------------------
 // LED Status
 int ledState = LOW;             // ledState used to set the LED
@@ -51,7 +53,8 @@ void receiveData() {
   }
 }
 
-void processJson(const String& jsonString) { // 1. ส่งค่าแบบอ้างอิง (&) ลดการสำเนาข้อความในแรม
+// 1. ส่งค่าแบบอ้างอิง (&) ลดการสำเนาข้อความในแรม
+void processJson(const String& jsonString) { 
   digitalWrite(TEST_PIN_SERIAL, HIGH);
   
   // 2. ใช้ JsonDocument ตัวใหม่ (ArduinoJson V7) เบาและเร็วกว่า StaticJsonDocument ตัวเก่ามาก
@@ -75,13 +78,16 @@ void processJson(const String& jsonString) { // 1. ส่งค่าแบบ�
   #if defined(DEBUG)
     Serial.println(F("📨 Data received!"));
   #endif
-
-  notifier.sendAll(jsonString);
-
   // 3. ดึงค่ามาเก็บในตัวแปรครั้งเดียว ลดการเข้าถึง Object ใน JSON ซ้ำซ้อน (ทำงานเร็วขึ้นชัดเจน)
-  int alarm_count = doc["alarm_count"];
-  int offline_count = doc["offline_count"];
+  bool testRun = (bool)doc["testRun"];
+  bool ac_loss = (bool)doc["ac_loss"];
+  int alarm_count = (int)doc["alarm_count"];
+  int offline_count = (int)doc["offline_count"];
   bool is_siren_disabled = dsiable_siren();
+  if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true || testRun == true){
+    notifier.sendAll(jsonString);
+  }
+  // scheduled_time = false;
 
   #if defined(DEBUG)
     Serial.print(F("***Alert count = "));
@@ -228,6 +234,7 @@ void loop() {
   if (currentMillis - previousMillisUpdate >= intervalUpdate) {
     previousMillisUpdate = currentMillis;
     timeClient.update();
+    scheduled_time = false;
     digitalWrite(TEST_PIN_SERIAL, HIGH); 
     // digitalWrite(RELAY1_PIN, HIGH);
     // digitalWrite(RELAY2_PIN, HIGH);
@@ -236,6 +243,7 @@ void loop() {
   if (currentHour != lastNotifiedHour) {
     if ((currentHour % NOTIFICATION_INTERVAL_HOURS) == 0) {      
       // *** ใส่โค้ดแจ้งเตือนของคุณที่นี่ ***      
+      scheduled_time = true;
       digitalWrite(TEST_PIN_SERIAL, LOW);     
       lastNotifiedHour = currentHour;
     }

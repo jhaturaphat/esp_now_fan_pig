@@ -150,6 +150,19 @@ void checkSensorsCommunication(){
   }
 }
 
+
+void CheckHashAlarm(){
+  alarm_count = 0;
+  for(int i = 0; i < MAX_SENSORS; i++){
+    if(sensors_storage[i].is_online && (sensors_storage[i].last_seen > 0)){
+      if(sensors_storage[i].switch_state == LOW){
+        alarm_count++;
+      }
+    }
+  }
+}
+
+
 // สร้าง Array ตามจำนวน MAXSENSOR เพื่อเก็บค่า แต้ละเซ็นเซอร์ไว้ที่ตำแหน่งต่างๆตาม index
 void initializeSensorStorage() {
   // Allocate memory
@@ -160,17 +173,6 @@ void initializeSensorStorage() {
     sensors_storage[i].switch_state = true;  // เริ่มต้นเป็น closed
     sensors_storage[i].last_seen = 0;
     memset(sensors_storage[i].mac, 0, 6);
-  }
-}
-
-void CheckHashAlarm(){
-  alarm_count = 0;
-  for(int i = 0; i < MAX_SENSORS; i++){
-    if(sensors_storage[i].is_online && (sensors_storage[i].last_seen > 0)){
-      if(sensors_storage[i].switch_state == LOW){
-        alarm_count++;
-      }
-    }
   }
 }
 
@@ -267,7 +269,7 @@ void setup() {
   pinMode(LED_STATUS, OUTPUT); 
   // pinMode(CONFIG_PIN, INPUT_PULLUP);
   pinMode(TEST_PIN, INPUT_PULLUP);
-  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
+  pinMode(TEST_PIN_SERIAL, INPUT);
   pinMode(DISABLE_SIREN, INPUT_PULLUP);
 
   cfgManager.begin(CONFIG_PIN); 

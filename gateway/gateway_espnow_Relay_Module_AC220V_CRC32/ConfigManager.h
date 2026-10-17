@@ -158,6 +158,7 @@ private:
         dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
         dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 
+
         // เริ่ม mDNS
         if (MDNS.begin("่esp32")) {
             MDNS.addService("http", "tcp", 80); // ประกาศว่าเป็นเซิร์ฟเวอร์ HTTP บนพอร์ต 80            

@@ -46,6 +46,7 @@ public:
   bool sendDiscord(String jsonString);
   bool sendTelegram(String jsonString);
   bool sendNtfy(String jsonString);
+  bool test(String jsonString);
   
   // เปิด/ปิดการใช้งาน
   void enableDiscord(bool enable);

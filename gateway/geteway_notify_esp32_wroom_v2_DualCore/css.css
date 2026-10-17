@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+  }
+
+  /* การจัดการของ h1 */
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  /* การจัดการของ .content */
+  .content {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* การจัดการของ .form-group */
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  /* การจัดการของปุ่ม */
+  .form-group button {
+    width: 100%;
+    height: 50px;
+    padding: 10px;
+    background-color: #28a745;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: #218838;
+  }
+
+  /* การจัดการของ .dev-by */
+  .dev-by {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  /* ซ่อน radio button จริงๆ ไปเลย */
+  input[type="radio"] {
+    display: none;
+  }
+  .radio-group {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ออกแบบ label ให้ดูเหมือนปุ่มหรือกล่อง */
+  .radio-group > label {
+    padding: 10px 15px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+
+  /* เมื่อ radio button ถูกเช็ค ให้เปลี่ยนสไตล์ของ label ที่ตามหลังมา */
+  input[type="radio"]:checked + label {
+    background-color: #28a745; /* สีน้ำเงินสวยๆ */
+    color: white;
+    border-color: #28a745;
+    font-weight: bold;
+  }
+
+  /* ปุ่มปิด  */
+  .floating-power-btn {
+    
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 1000;
+
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease,
+      transform 0.2s ease;
+
+    
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+
+    
+    font-size: 40px; 
+    line-height: 1;
+    padding-top: 0px; 
+  }
+
+  /* ส่วน Hover และ Active (คงเดิม) */
+  .floating-power-btn:hover {
+    background-color: #d32f2f;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+  }
+
+  .floating-power-btn:active {
+    transform: scale(0.95);
+  }
+  
+
+  /* Media Queries สำหรับหน้าจอขนาดเล็กกว่า 768px */
+  @media (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
+
+    .content {
+      padding: 15px;
+    }
+
+    h1 {
+      font-size: 1.5em;
+    }
+
+    button {
+      font-size: 14px;
+    }
+    .floating-power-btn{
+        padding-top: 6px; 
+    }
+  }
+
+  /* Media Queries สำหรับหน้าจอขนาดเล็กกว่า 480px */
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 1.2em;
+    }
+
+    .form-group label {
+      font-size: 14px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"] {
+      font-size: 14px;
+    }
+
+    button {
+      font-size: 14px;
+      padding: 8px;
+    }
+    .floating-power-btn{
+        padding-top: 6px; 
+    }
+  }

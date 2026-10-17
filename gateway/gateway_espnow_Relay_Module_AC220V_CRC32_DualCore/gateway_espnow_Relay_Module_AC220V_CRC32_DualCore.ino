@@ -130,7 +130,7 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
   pinMode(TEST_PIN, INPUT_PULLUP);
-  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
+  pinMode(TEST_PIN_SERIAL, INPUT);
   pinMode(DISABLE_SIREN, INPUT_PULLUP);
 
   // 1. สร้าง Mutex ควบคุมข้อมูลข้าม Core
@@ -222,6 +222,7 @@ void TaskSensorIngestion(void *pvParameters) {
 void TaskGatewayLogic(void *pvParameters) {
   unsigned long PERIOD_SIREN = 0; 
   unsigned long PERIOD_SIREN2 = 0;
+  unsigned long PERIOD_RUN = 0;
 
   for (;;) {
     disableSiren = (digitalRead(DISABLE_SIREN) == LOW);
@@ -237,12 +238,14 @@ void TaskGatewayLogic(void *pvParameters) {
         if (sensors_storage[i].last_seen > 0) {
           if (current_time - sensors_storage[i].last_seen > COMMUNICATION_TIMEOUT) {
             temp_offline++;
+            // ตรวจสอบอีกว่า เคย Online มาก่อนหน้านี้ก็กำหนดสถานะใหม่เป็น Offline โดยใช้ !sensors_storage[i].is_online
             if (sensors_storage[i].is_online) {
               sensors_storage[i].is_online = !sensors_storage[i].is_online;
-              sensors_storage[i].switch_state = true;
+              sensors_storage[i].switch_state = HIGH;
             }
           }
         }
+        // ตรวจสอบว่ามี Alram เกิดขึ้นหรือไหม
         if (sensors_storage[i].is_online && (sensors_storage[i].last_seen > 0)) {
           if (sensors_storage[i].switch_state == LOW) {
             temp_alarm++;
@@ -253,6 +256,13 @@ void TaskGatewayLogic(void *pvParameters) {
       alarm_count = temp_alarm;
 
       xSemaphoreGive(sensorMutex);
+    }
+
+    if(millis() - PERIOD_RUN >= 60000){
+      PERIOD_RUN = millis();
+      if(!handleAlarm){
+        sendSensorsData(false);
+      }      
     }
 
     // --- 2. ควบคุม Relay / Siren Logic ---
@@ -267,17 +277,18 @@ void TaskGatewayLogic(void *pvParameters) {
 
       if (millis() - PERIOD_SIREN >= SIREN_DURATION) {      
         PERIOD_SIREN = millis();      
-        handleAlarm = true;
-        sendSensorsData(); 
+        handleAlarm = true;       
+        sendSensorsData(false); 
       }
     } else {
       if (handleAlarm && (alarm_count == 0)) { 
         if (millis() - PERIOD_SIREN2 >= 15000) {  
-          PERIOD_SIREN2 = millis();
-          sendSensorsData(); 
+          PERIOD_SIREN2 = millis();          
+          sendSensorsData(true); 
           if (retry_count >= 1) {
-            handleAlarm = false;
-            retry_count = 0;
+            handleAlarm = !handleAlarm;
+            offline_count = 0;
+            retry_count = 0;           
           } else {
             retry_count++;       
           }
@@ -286,14 +297,13 @@ void TaskGatewayLogic(void *pvParameters) {
 
       if (reload) {
         reload = false;
-        sendSensorsData(); 
+        sendSensorsData(true); 
       }
     
       digitalWrite(RELAY1_PIN, LOW);     
       digitalWrite(RELAY2_PIN, LOW);     
-    }
+    } 
 
-    // --- 3. ตรวจสอบปุ่มกดทดสอบระบบ ---
     test_gw();
 
     vTaskDelay(pdMS_TO_TICKS(20)); // ความถี่ประมวลผลประมาณ 50Hz
@@ -310,7 +320,7 @@ void loop() {
 // =========================================================================
 // JSON Serialization & Serial Output (ทำบน Core 1 เท่านั้น)
 // =========================================================================
-void sendSensorsData() {
+void sendSensorsData(bool testRun) {
   JsonDocument doc; 
   JsonArray sensors = doc.createNestedArray("sensors");
   
@@ -326,9 +336,14 @@ void sendSensorsData() {
     xSemaphoreGive(sensorMutex);
   }
   
+  if(testRun) {   
+    doc["testRun"] = true;     
+  }else{
+    doc["testRun"] = false; 
+  }
+  doc["offline_count"] = offline_count;  
   doc["ac_loss"] = ac220_loss;   
-  doc["alarm_count"] = alarm_count;
-  doc["offline_count"] = offline_count;
+  doc["alarm_count"] = alarm_count;  
   doc["mac"] = static_mac_address;
   doc["ch"] = WiFi.channel();
   
@@ -337,8 +352,9 @@ void sendSensorsData() {
 }
 
 void test_gw() {
-  if ((digitalRead(TEST_PIN) == LOW) || (digitalRead(TEST_PIN_SERIAL) == LOW)) {
-    sendSensorsData(); 
+  // if ((digitalRead(TEST_PIN) == LOW) || (digitalRead(TEST_PIN_SERIAL) == LOW)) {
+  if ((digitalRead(TEST_PIN) == LOW)){
+    sendSensorsData(true); 
     vTaskDelay(pdMS_TO_TICKS(200)); // Debounce ป้องกันการส่งข้อมูลซ้ำ
   }
 }

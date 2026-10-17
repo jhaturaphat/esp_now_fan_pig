@@ -323,6 +323,38 @@ bool Notifier::sendNtfy(String jsonString) {
   }
 }
 
+bool Notifier::test(String jsonString){
+  if(!ntfy_enabled || WiFi.status() != WL_CONNECTED) {
+    return false;
+  }
+  
+  HTTPClient http;
+  
+  String message = createNtfyMessage(jsonString);
+  String url = ntfy_server;
+  
+  http.begin(url);
+  http.addHeader("Content-Type", "text/plain");
+  // http.addHeader("Title", "ESP32 Sensors Report");
+  http.addHeader("Priority", "default");
+  // http.addHeader("Tags", "computer,sensors");
+  
+  int httpCode = http.POST(message);
+  http.end();
+  
+  if(httpCode > 0) {
+    #if defined(DEBUG) 
+    Serial.println("✅ Ntfy: Sent! Code: " + String(httpCode));
+    #endif
+    return true;
+  } else {
+    #if defined(DEBUG) 
+    Serial.println("❌ Ntfy: Failed! Code: " + String(httpCode));
+    #endif
+    return false;
+  }
+}
+
 void Notifier::sendAll(String jsonString) {
   int retry = 0;
   if(discord_enabled) {
