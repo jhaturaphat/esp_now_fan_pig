@@ -176,8 +176,8 @@ void sendSensorData(bool is_heartbeat) {
   msg.sensor_id = myConfig.deviceID; 
   #endif
 
-  msg.switch_status = (proximity_type == current_switch_state) ? true : false;
-  msg.timestamp = millis();
+  msg.switch_status = (proximity_type == current_switch_state) ? true : false; // false คือ เซ็นเซอร์พัดลมดับ
+  msg.timestamp = millis(); 
   
   // 3. คำนวณ CRC32 จากเนื้อข้อมูลทั้งหมด (ยกเว้นช่อง checksum ตัวเอง)
   size_t dataSizeToCalculate = sizeof(msg) - sizeof(msg.checksum);

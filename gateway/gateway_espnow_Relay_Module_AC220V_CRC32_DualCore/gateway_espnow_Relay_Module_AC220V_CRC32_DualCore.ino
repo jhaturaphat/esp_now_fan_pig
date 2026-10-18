@@ -163,7 +163,7 @@ void setup() {
   sensors_storage = new sensor_storage[MAX_SENSORS];
   for (int i = 0; i < MAX_SENSORS; i++) {
     sensors_storage[i].is_online = false;
-    sensors_storage[i].switch_state = true;
+    sensors_storage[i].switch_state = true;  // false คือ เซ็นเซอร์พัดลมดับ
     sensors_storage[i].last_seen = 0;
     memset(sensors_storage[i].mac, 0, 6);
   }
@@ -323,7 +323,7 @@ void loop() {
 void sendSensorsData(bool testRun) {
   JsonDocument doc; 
   JsonArray sensors = doc.createNestedArray("sensors");
-  
+  // unsigned long current_time_seconds = millis() / 1000;
   // อ่านข้อมูล Array แบบ Thread-Safe
   if (xSemaphoreTake(sensorMutex, pdMS_TO_TICKS(20))) {
     for (int i = 0; i < MAX_SENSORS; i++) {
@@ -331,7 +331,7 @@ void sendSensorsData(bool testRun) {
       obj["id"] = i + 1;
       obj["online"] = sensors_storage[i].is_online;
       obj["switch"] = sensors_storage[i].switch_state;
-      obj["uptime"] = (sensors_storage[i].last_seen > 0) ? ((millis() - sensors_storage[i].last_seen) / 1000) : 0;    
+      obj["uptime"] = sensors_storage[i].last_seen  / 1000;    
     }
     xSemaphoreGive(sensorMutex);
   }

@@ -1,3 +1,5 @@
+#include <sys/_intsup.h>
+#include <sys/_types.h>
 // https://discord.com/api/webhooks/1427287898759368744/pQCXfltKyhnN_rASeL4Jt-G2FGqFim8USSBepLEn0mDP7LAyFVhvV8diZkdH_Pco9ZB0
 
 #include "Notifier.h"
@@ -165,9 +167,9 @@ String Notifier::createNtfyMessage(const String& jsonString) { // 1. ส่ง�
   JsonArray sensors = doc["sensors"];
   for (JsonObject sensor : sensors) {
     int id = sensor["id"];
-    bool online = sensor["online"];
-    bool switch_state = sensor["switch"];
-    unsigned long uptime = sensor["uptime"];
+    bool online = (bool)sensor["online"];
+    bool switch_state = (bool)sensor["switch"];  // false คือ เซ็นเซอร์พัดลมดับ
+    unsigned long uptime = (long)sensor["uptime"];
     
     message += F("🤖");
     message += id; // String เติมต่อตัวเลขได้เลย ไม่ต้องครอบ String(id) ให้ช้าลง
@@ -187,7 +189,7 @@ String Notifier::createNtfyMessage(const String& jsonString) { // 1. ส่ง�
     if (uptime > 0) {
       message += switch_state ? F("☃️ปกติ") : F("🚨ฉุกเฉิน");
     } else {
-      message += F("🔌ไม่พบ");
+      message += switch_state ? F("🔌ไม่พบ") : F("🚨ฉุกเฉิน");
     }
     
     message += F(" | Uptime: ");
