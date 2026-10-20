@@ -2,10 +2,13 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
+
 #include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
+#include <ArduinoJson.h> 
 #include <ESPAsyncWebServer.h>
+#include <ESPAsyncTCP.h>
 #include <LittleFS.h>
+
 
 #define DEBUG
 
@@ -31,6 +34,7 @@ class WifiManager {
     void startConfigMode();                         // เปิดโหมด Config (AP)
     void setupConfigServer();                       // ตั้งค่าหน้าเว็บสำหรับรับค่าจากมือถือ 
     String processor(const String& var);
+    String chipID();
 };
 
 #endif // WIFI_MANAGER_H

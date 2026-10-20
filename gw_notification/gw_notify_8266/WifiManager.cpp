@@ -1,5 +1,7 @@
 #include "WifiManager.h"
 #include "html.h"
+#include "style.h"
+#include "script.h"
 
 WifiManager::WifiManager(AsyncWebServer* server) {
   _server = server;
@@ -57,11 +59,11 @@ void WifiManager::startConfigMode() {
     WiFi.mode(WIFI_AP);
     
     // ตั้งชื่อสัญญาณ Wi-Fi ที่ ESP-01 ปล่อยออกมา (ไม่มีรหัสผ่าน)
-    const char* apSsid = "ESP01_Config";
-    WiFi.softAP(apSsid);
+    const String apName = "ESP_Config_" + chipID(); 
+    WiFi.softAP(apName.c_str());
     #if defined(DEBUG)
     Serial.print("[WiFi] Connect to: ");
-    Serial.println(apSsid);
+    Serial.println(apName);
     Serial.print("[WiFi] Open browser and go to IP: ");
     Serial.println(WiFi.softAPIP());
     #endif
@@ -94,7 +96,16 @@ void WifiManager::setupConfigServer() {
         });
     });
 
-    // 2. Path รับข้อมูล POST จากฟอร์มเมื่อกดปุ่ม "บันทึก"
+    // 2. โหลด Style css
+    _server->on("/styles.css",HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send_P(200,"text/css", style);
+    });
+    // 3. โหลด Javascript
+    _server->on("/script.js",HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send_P(200,"text/javascript", script);
+    });
+
+    // 4. Path รับข้อมูล POST จากฟอร์มเมื่อกดปุ่ม "บันทึก"
     _server->on("/save", HTTP_POST, [this](AsyncWebServerRequest *request){    
         String reqSsid = "";
         String reqPass = ""; 
@@ -118,7 +129,39 @@ void WifiManager::setupConfigServer() {
         } else {
             request->send(400, "text/plain", "SSID cannot be empty.");
         }
-    });
+      });
+
+      // 5. Scan network
+      _server->on("/getWifiList", HTTP_GET, [](AsyncWebServerRequest *request) {
+      // ดึงจำนวนเครือข่ายที่ระบบสแกนเจอในรอบล่าสุด (ไม่ต้องเริ่มสแกนใหม่)
+        int n = WiFi.scanComplete(); 
+
+        JsonDocument doc; // สำหรับ ArduinoJson v7 (ถ้า v6 ให้ใช้ DynamicJsonDocument doc(2048);)
+        JsonArray root = doc.to<JsonArray>();
+
+        // กรณีสแกนเสร็จเรียบร้อยและเจอสัญญาณ
+        if (n > 0) {
+          for (int i = 0; i < n; ++i) {
+            JsonObject network = root.add<JsonObject>(); 
+            network["id"] = i + 1;
+            network["ssid"] = WiFi.SSID(i);
+            network["rssi"] = WiFi.RSSI(i);
+            network["encryption"] = (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? "open" : "secured";
+          }
+        }
+
+        String jsonResponse;
+        serializeJson(doc, jsonResponse);
+
+        // ส่งข้อมูล JSON กลับไปทันที (ไม่มีการบล็อกการทำงาน)
+        request->send(200, "application/json", jsonResponse);
+
+        // สั่งให้ระบบเริ่มสแกนรอบถัดไปแบบอัตโนมัติ (Async) เพื่อเตรียมข้อมูลสำหรับครั้งหน้า
+        // พารามิเตอร์แรก 'true' หมายถึงให้ทำงานแบบ Async / เบื้องหลัง
+        WiFi.scanNetworks(true, false);
+      });
+
+
 
     _server->begin();
 }
@@ -155,6 +198,12 @@ bool WifiManager::saveConfig(String ssid, String pass) {
     Serial.println("[FS] Wi-Fi configuration saved to LittleFS.");
     #endif
     return true;
+}
+
+String WifiManager::chipID(){
+  String chipIDStr = String(ESP.getChipId(), HEX);
+  chipIDStr.toUpperCase();
+  return chipIDStr;
 }
 
 void WifiManager::resetSettings() {
