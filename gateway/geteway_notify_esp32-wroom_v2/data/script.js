@@ -5,10 +5,12 @@ window.addEventListener("load", async () => {
 });
 
 let playload = {
-  url:"",
-  channel:"",
+  ntfy_topic:"",
+  telegram_token:"",
+  telegram_channel:"",
+  discord_webhook:"",  
   type: 1,
-  interval: 4,
+  interval: 1,
   location: "โปรดระบุ"
 };
 
@@ -49,22 +51,22 @@ function saveNotifycfg() {
       switch (radio.id) {
         case "ntfy":
           playload.location = (document.getElementById("location").value).trim();
-          playload.url = (document.getElementById("topic").value).trim();
+          playload.ntfy_topic = (document.getElementById("topic").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
         break;
         case "telegram":
           playload.location = (document.getElementById("location").value).trim();
-          playload.url = (document.getElementById("telegram_token").value).trim();
-          playload.channel = (document.getElementById("telegram_channel").value).trim();
+          playload.telegram_token = (document.getElementById("telegram_token").value).trim();
+          playload.telegram_channel = (document.getElementById("telegram_channel").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);
         break;
         case "discord":
           playload.location = (document.getElementById("location").value).trim();
-          playload.url = (document.getElementById("discord_webhook").value).trim();
+          playload.discord_webhook = (document.getElementById("discord_webhook").value).trim();
           playload.type = parseInt(radio.value); 
           playload.interval = parseInt(document.getElementById("schedule").value);           
           sendConfigNotify(playload);

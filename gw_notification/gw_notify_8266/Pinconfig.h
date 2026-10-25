@@ -1,8 +1,5 @@
 
-#define PIN_CONFIG 0
-#define PIN_RXD 3
-#define PIN_LED 1
-
-#define DEBUG
-
+#define PIN_CONFIG 0 //ใช้ GPIO0 เป็นปุ่มกด (Active LOW)
+// #define PIN_RXD 3
+#define LED_PIN 2
 

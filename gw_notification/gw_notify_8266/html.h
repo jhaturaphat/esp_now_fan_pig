@@ -44,13 +44,13 @@ const char config_html[] PROGMEM = R"rawliteral(
     <div class="content" id="notify-content" style="display: none">
       <div class="form-group">
         <label for="location">🏠สถานที่ตั้ง</label>
-        <input type="text" id="location" placeholder="ชื่อฟาร์ม 1,2,...">
+        <input type="text" id="location" name="%LOCALTION%" placeholder="ชื่อฟาร์ม 1,2,...">
       </div>
       <!-- ntfy.sh -->
       <div class="ntfy" style="display: none">
         <div class="form-group">
           <label for="topic">🦕Topic</label>
-          <input type="text" id="topic" list="webapi" placeholder="https://ntfy.sh/<mytopic>" />
+          <input type="text" id="topic" value="%NTFY_TOPIC%" list="webapi" placeholder="https://ntfy.sh/<mytopic>" />
           <datalist id="webapi">
             <option value="https://ntfy.sh/">
           </datalist>
@@ -60,14 +60,14 @@ const char config_html[] PROGMEM = R"rawliteral(
       <div class="telegram" style="display: none">
         <div class="form-group">
           <label for="telegram_token">🗝️Telegram Token </label>
-          <input type="text" id="telegram_token" list="telegram_list" placeholder="https://api.telegram.org/bot<YOUR_BOT_TOKEN>"/>
+          <input type="text" id="telegram_token" vlaue="%TEL_TOKEN%" list="telegram_list" placeholder="https://api.telegram.org/bot<YOUR_BOT_TOKEN>"/>
           <datalist id="telegram_list">
             <option value="https://api.telegram.org/bot">
           </datalist>
         </div>
         <div class="form-group">
           <label for="telegram_channel">📻Telegram Chanel</label>
-          <input type="text" id="telegram_channel" placeholder="-1003513801459"/>
+          <input type="text" id="telegram_channel" value="%TEL_CH%" placeholder="-1003513801459"/>
         </div>
       </div>
       <!-- Discord -->
@@ -77,6 +77,7 @@ const char config_html[] PROGMEM = R"rawliteral(
           <input
             type="text"
             id="discord_webhook"
+            value="%DISC_URL%"
             placeholder="https://discord.com/api/webhooks/1427287898759368744/pQCXfltKyhnN_rASeL4Jt-G2FGqFim8USSBepLEn0mDP7LAyFVhvV8diZkdH_Pco9ZB0"
             list="discord_list"
           />

@@ -113,36 +113,7 @@ String Notifier::createTelegramMessage(String jsonString) {
   
   return message;
 }
-// สร้าง Message สำหรับ ntfy
-/*String Notifier::createNtfyMessage(String jsonString) {
-  StaticJsonDocument<1024> doc;
-  deserializeJson(doc, jsonString);
-  
-  String message = "**🐷🐓Sensors Status Report**\n";
-  message +=  "**🏠"+location+"**\n\n";
-  
-  JsonArray sensors = doc["sensors"];
-  bool ac_loss = (bool)doc["ac_loss"];
-  message += "⚡Main Power is "+String(ac_loss ? "🚫Offline\n" : "🔋Online\n");
-  
-  for (JsonObject sensor : sensors) {
-    int id = sensor["id"];
-    bool online = sensor["online"];
-    bool switch_state = sensor["switch"];
-    unsigned long uptime = sensor["uptime"];
-    
-    message += "🤖"+ String(id) + ": ";
-    message += online ? "🟢ONLINE" : uptime > 0  ? "🔴OFFLINE" : "⚫NONE";
-    message += " | " + String(switch_state ? uptime > 0 ? "☃️ปกติ" : "🔌ไม่พบ"  : uptime > 0 ? "🚨ฉุกเฉิน" : "🔌ไม่พบ");
-    message += " | Uptime: " + String(uptime) + "s\n";
-  }
-  
-  message += "\n⚠️ *Alarms:* " + String((int)doc["alarm_count"]);
-  message += "❌ *Offline:* " + String((int)doc["offline_count"]);
-  message += "\n🎁 ch=" + String(doc["ch"]) +" | mac=" + String(doc["mac"]);
-  
-  return message;
-}*/
+
 
 //Version 2 
 String Notifier::createNtfyMessage(const String& jsonString) { // 1. ส่งแบบอ้างอิง (&) ลดการสำเนาข้อความในแรม
