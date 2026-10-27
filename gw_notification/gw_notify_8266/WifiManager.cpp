@@ -22,7 +22,7 @@ void WifiManager::begin(bool mode){
     Serial.println("\n[WiFi] Found saved credentials. Connecting to: " + _ssid);
     #endif
     
-    if(mode){
+    if(!mode){
       //เข้าโหมด Config ให้มือถือเข้ามาตั้งค่า
       startConfigMode();
     }

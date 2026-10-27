@@ -79,11 +79,12 @@ void processJson(const String& jsonString) {
     Serial.println(F("📨 Data received!"));
   #endif
   // 3. ดึงค่ามาเก็บในตัวแปรครั้งเดียว ลดการเข้าถึง Object ใน JSON ซ้ำซ้อน (ทำงานเร็วขึ้นชัดเจน)
+  bool testRun = (bool)doc["testRun"];
   bool ac_loss = (bool)doc["ac_loss"];
   int alarm_count = (int)doc["alarm_count"];
   int offline_count = (int)doc["offline_count"];
   bool is_siren_disabled = dsiable_siren();
-  if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true){
+  if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true || testRun == true){
     notifier.sendAll(jsonString);
   }
   // scheduled_time = false;

@@ -7,6 +7,7 @@
 #include "Notifying.h"
 #include "debug.h"
 
+#define PIN_CONFIG 0 //ใช้ GPIO0 เป็นปุ่มกด (Active LOW)
 
 // ตั้งค่า NTP Client
 WiFiUDP ntpUDP;
@@ -30,20 +31,25 @@ bool scheduled_time = false;  //ส่งแจ้งเือนตามเว
 int lastNotifiedHour = -1; // ตัวแปรสำหรับเก็บชั่วโมงล่าสุดที่มีการแจ้งเตือน
 
 void setup() {
-    #if defined(DEBUG)
-    Serial.begin(115200);
-    #else
-    Serial.begin(9600);
-    #endif
-    pinMode(LED_PIN, OUTPUT);
-    // เรียกฟังก์ชันจัดการ Wi-Fi (ถ้าต่อไม่ได้ ระบบจะเปิดเว็บ Config หน้า 192.168.4.1 ค้างไว้รอเรา)
-    wifiManager.begin(false);
-    #if defined(DEBUG)
-    Serial.println("[Main] System is running normally.");
-    #endif
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(PIN_CONFIG, INPUT);
+  #if defined(DEBUG)
+  Serial.begin(115200);
+  #else
+  Serial.begin(9600);
+  #endif
+  delay(5000);
+  bool digit = digitalRead(PIN_CONFIG);
+  // เรียกฟังก์ชันจัดการ Wi-Fi (ถ้าต่อไม่ได้ ระบบจะเปิดเว็บ Config หน้า 192.168.4.1 ค้างไว้รอเรา)
+  wifiManager.begin(digit);
+  #if defined(DEBUG)
+  Serial.println("[Main] System is running normally.");
+  #endif
+
 }
 
 // สร้าง Mock JSON และส่งแจ้งเตือน
+#if defined(DEBUG)
 void sendMockSensorsData() {
 
   // ArduinoJson v6
@@ -78,13 +84,14 @@ void sendMockSensorsData() {
     wifiManager._config
   );
 
-  #if defined(DEBUG)
+  
   Serial.println("[MOCK] Sending JSON:");
   Serial.println(jsonString);
   Serial.println(result ? "[MOCK] SEND OK" : "[MOCK] SEND FAILED");
   Serial.printf("[HEAP] Free: %u bytes\n", ESP.getFreeHeap());
-  #endif
+  
 }
+#endif
 
 
 void receiveData() {
@@ -109,6 +116,7 @@ void receiveData() {
         processJson(inputBuffer);
         inputBuffer = "";  // Clear buffer
         } else {
+        LED_INTERVAL = 80;
         inputBuffer += c;
         }
     }
@@ -136,11 +144,12 @@ void processJson(const String& jsonString) {
     Serial.println(F("📨 Data received!"));
   #endif
   // 3. ดึงค่ามาเก็บในตัวแปรครั้งเดียว ลดการเข้าถึง Object ใน JSON ซ้ำซ้อน (ทำงานเร็วขึ้นชัดเจน)
+  bool testSwitch = (bool)doc["testRun"];
   bool ac_loss = (bool)doc["ac_loss"];
   int alarm_count = (int)doc["alarm_count"];
   int offline_count = (int)doc["offline_count"];
   
-  if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true){
+  if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true || testSwitch == true){
     if(notifier.send(jsonString, wifiManager._config)){
       scheduled_time = false;
     }
@@ -150,15 +159,11 @@ void processJson(const String& jsonString) {
 
 void loop() {
   unsigned long currentMillis = millis();
+  // Update เวลาจาก internet
   if (currentMillis - lastNotifyTime >= NOTIFY_INTERVAL) {
     lastNotifyTime = currentMillis;
     timeClient.update();
-    scheduled_time = false;
-    #if defined(DEBUG)
-    if (WiFi.status() == WL_CONNECTED) {
-      // sendMockSensorsData();
-    }
-    #endif
+    scheduled_time = false;    
   }
 
   // ตรวจสอบว่าเวลาผ่านไปจนถึงกำหนดหรือยัง
@@ -177,10 +182,17 @@ if (currentMillis - lastLedTime >= LED_INTERVAL) {
     if ((currentHour % NOTIFICATION_INTERVAL_HOURS) == 0) {      
       // *** ใส่โค้ดแจ้งเตือนของคุณที่นี่ ***      
       scheduled_time = true;        
-      lastNotifiedHour = currentHour;
-      sendMockSensorsData();
+      lastNotifiedHour = currentHour;      
+      #if defined(DEBUG)
+      sendMockSensorsData();      
+      #endif
     }
   }
+  #if defined(DEBUG)
+
+  #else
+    receiveData();
+  #endif
 
   yield();
 }
