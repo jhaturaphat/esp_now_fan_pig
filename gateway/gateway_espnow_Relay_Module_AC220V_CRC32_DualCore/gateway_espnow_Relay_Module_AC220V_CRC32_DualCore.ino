@@ -14,9 +14,11 @@
 #define TEST_PIN 32        // input pullup
 #define TEST_PIN_SERIAL 23 // input pullup
 #define DISABLE_SIREN 25   // input pullup
-#define AC220_LOSS 27      // input
+#define AC220_LOSS 34      // input เดิม 27
 #define RXD2 21  
 #define TXD2 19  
+// #define RXD2 15  
+// #define TXD2 2  
 
 #define COMMUNICATION_TIMEOUT 30001 // 30 วินาที timeout 
 #define SIREN_DURATION 10000        // 10 วินาที
@@ -125,12 +127,12 @@ void setup() {
   #endif
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
-  pinMode(AC220_LOSS, INPUT);
+  pinMode(AC220_LOSS, INPUT_PULLUP);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_STATUS, OUTPUT); 
   pinMode(TEST_PIN, INPUT_PULLUP);
-  pinMode(TEST_PIN_SERIAL, INPUT);
+  pinMode(TEST_PIN_SERIAL, INPUT_PULLUP);
   pinMode(DISABLE_SIREN, INPUT_PULLUP);
 
   // 1. สร้าง Mutex ควบคุมข้อมูลข้าม Core

@@ -29,6 +29,7 @@ bool LED_BLANKING = LOW;
 unsigned int NOTIFICATION_INTERVAL_HOURS = 1; 
 bool scheduled_time = false;  //ส่งแจ้งเือนตามเวลา
 int lastNotifiedHour = -1; // ตัวแปรสำหรับเก็บชั่วโมงล่าสุดที่มีการแจ้งเตือน
+bool Notifying_stat = false;
 
 void setup() {
   pinMode(LED_PIN, OUTPUT);
@@ -150,7 +151,7 @@ void processJson(const String& jsonString) {
   int offline_count = (int)doc["offline_count"];
   
   if(alarm_count > 0 || offline_count > 0 || scheduled_time == true || ac_loss == true || testSwitch == true){
-    if(notifier.send(jsonString, wifiManager._config)){
+    if(notifier.send(jsonString, wifiManager._config)){      
       scheduled_time = false;
     }
   }

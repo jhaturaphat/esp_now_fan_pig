@@ -44,7 +44,7 @@ const char config_html[] PROGMEM = R"rawliteral(
     <div class="content" id="notify-content" style="display: none">
       <div class="form-group">
         <label for="location">🏠สถานที่ตั้ง</label>
-        <input type="text" id="location" name="%LOCALTION%" placeholder="ชื่อฟาร์ม 1,2,...">
+        <input type="text" id="location" value="%LOCALTION%" placeholder="ชื่อฟาร์ม 1,2,...">
       </div>
       <!-- ntfy.sh -->
       <div class="ntfy" style="display: none">

@@ -183,16 +183,29 @@ private:
         
 
         // ตรวจสอบว่ามี currentConfig อยู่จริงหรือไม่
-        if (currentConfig != nullptr) {
-            // หากมี ให้ดึงค่าจาก currentConfig มาแปลงเป็นสตริง (ปรับตามโค้ดเดิมของคุณ)
-            char macStr[18];
-            snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", 
-                    currentConfig->gatewayMAC[0], currentConfig->gatewayMAC[1], currentConfig->gatewayMAC[2], 
-                    currentConfig->gatewayMAC[3], currentConfig->gatewayMAC[4], currentConfig->gatewayMAC[5]);
-            
+        char macStr[18];
+
+        bool macValid = false;
+
+        for (int i = 0; i < 6; i++) {
+            if (currentConfig.gatewayMAC[i] != 0) {
+                macValid = true;
+                break;
+            }
+        }
+
+        if (macValid) {
+        snprintf(macStr, sizeof(macStr),
+                "%02X:%02X:%02X:%02X:%02X:%02X",
+                currentConfig.gatewayMAC[0],
+                currentConfig.gatewayMAC[1],
+                currentConfig.gatewayMAC[2],
+                currentConfig.gatewayMAC[3],
+                currentConfig.gatewayMAC[4],
+                currentConfig.gatewayMAC[5]);
+
             html.replace("%MAC_VALUE%", String(macStr));
         } else {
-            // หากไม่มี (เป็น null) ให้ใส่ค่าเริ่มต้นที่คุณต้องการแทน
             html.replace("%MAC_VALUE%", "1C:69:20:9B:60:48");
         }
 
