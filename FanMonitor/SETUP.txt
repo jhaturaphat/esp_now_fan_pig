@@ -1,0 +1,8 @@
+Arduino IDE: install esp8266 by ESP8266 Community (core 3.1.x). Select Generic ESP8266 Module, actual flash capacity and a layout with LittleFS (e.g. 1MB with FS:64KB). Open FanMonitor.ino. All dependencies are part of the core. No data upload needed.
+Setup SSID: FanSetup-<chip ID>
+Setup Wi-Fi: open (no password)
+Address: http://192.168.4.1/
+GPIO0: release at reset; press after boot. Disconnect USB-UART TX from GPIO3 during operation.
+
+GPIO2 status LED (active LOW): 3.3V -> 1k resistor -> LED anode; LED cathode -> GPIO2. GPIO2 must be HIGH at reset; retain its boot pull-up.
+Boot window: steady on. Setup AP: double flash every 2 s. Waiting for sensor/Wi-Fi/time: half-second on/off. Normal: one short flash every 3 s. Confirmed fan alarm: fast blink (4 cycles/s), including while offline. HTTPS calls can briefly pause animation.

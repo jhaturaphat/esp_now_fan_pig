@@ -105,26 +105,6 @@ private:
         //Serial.println("ConfigManager: Configuration Saved.");
     }
 
-    // 3. ตัวประมวลผล HTML (แทนที่ค่าใน Template)
-    /*String processor(const String& var){
-        if(var == "ID_VALUE"){
-            return String(currentConfig.deviceID);
-        }
-
-        if(var == "CH_VALUE"){
-            return String(currentConfig.channel);
-        }
-
-        if(var == "MAC_VALUE"){
-            char macStr[18];
-            sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", 
-                    currentConfig.gatewayMAC[0], currentConfig.gatewayMAC[1], currentConfig.gatewayMAC[2], 
-                    currentConfig.gatewayMAC[3], currentConfig.gatewayMAC[4], currentConfig.gatewayMAC[5]);
-            return String(macStr);
-        }
-        return String();
-    }*/
-
     String chipID(){
       uint32_t chipId = ESP.getChipId();
       String chipIDStr = String(chipId, HEX);
