@@ -17,8 +17,8 @@
 // #define RXD2 15  
 // #define TXD2 2  
 
-#define COMMUNICATION_TIMEOUT 30001 // 30 วินาที timeout 
-#define SIREN_DURATION 10000        // 10 วินาที
+#define COMMUNICATION_TIMEOUT 60001 // 60 วินาที timeout 
+// #define SIREN_DURATION 10000        // 10 วินาที
 
 // Global Dynamic Flags
 volatile bool handleAlarm = false; 
@@ -231,6 +231,11 @@ void TaskGatewayLogic(void *pvParameters) {
     for (;;) {
 
         unsigned long currentMillis = millis();
+
+        bool CONFIG_PRESSED = (digitalRead(CONFIG_PIN) == LOW);  
+        if(CONFIG_PRESSED){
+          ESP.restart();
+        }
 
         // ========================================
         // 1. อ่านสถานะ Hardware

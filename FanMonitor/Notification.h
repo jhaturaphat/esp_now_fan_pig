@@ -15,12 +15,13 @@ int postState(int i, const String& msg, uint32_t& retryMs) {
   if (!http.begin(tls,i==0 ? cfg.discord : cfg.topic)) return -1;
   const char* headers[]={"Retry-After"};
   http.collectHeaders(headers,1);
-  http.addHeader("Content-Type",i==0 ? "application/json" : "text/plain; charset=utf-8");
+  http.addHeader("Content-Type",i==0 ? "application/json" : "text/markdown");
   if (i==1 && cfg.token.length()) http.addHeader("Authorization","Bearer "+cfg.token);
   String body=msg;
   if (i==0) {
     body.replace("\\","\\\\");
     body.replace("\"","\\\"");
+    body.replace("\n","\\n");
     body="{\"allowed_mentions\":{\"parse\":[]},\"content\":\""+body+"\"}";
   }
   int code=http.POST(body);
@@ -42,9 +43,14 @@ void notifyTick() {
     uint32_t now=millis();
     if (!(i==0 ? cfg.useDiscord : cfg.useNtfy) ||
         (!c.immediate && int32_t(now-c.due)<0)) continue;
-    String identity="ESP-"+String(ESP.getChipId(),HEX);
-    if (cfg.fanName.length()) identity="พัดลม "+cfg.fanName+" | "+identity;
-    String msg=identity+" | "+(alarm?"🚨 ALARM พัดลมดับ":"🟢 Heartbeat พัดลมปกติ")+" | "+localStamp();
+    String label=cfg.fanName;
+    if (!label.length()) label="ESP-"+String(ESP.getChipId(),HEX);
+    if (!label.startsWith("พัดลม")) label="พัดลม "+label;
+    String msg=alarm ? "# 🚨 " : "# 🟢 ";
+    msg+=label;
+    msg+=alarm ? " ดับ" : " ปกติ";
+    msg+="\n";
+    msg+=localStamp();
     uint32_t interval=alarm ? 10000UL : cfg.minutes*60000UL;
     uint32_t retryMs=10000;
     lastCode[i]=postState(i,msg,retryMs);
